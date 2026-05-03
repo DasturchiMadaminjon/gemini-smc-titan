@@ -58,21 +58,37 @@ class RAGEngine:
 
     def chunk_text(self, text, chunk_size=1000, overlap=200):
         """Uzun matnni ma'noli bo'laklarga ajratish"""
+        if not text: return []
         chunks = []
         start = 0
-        while start < len(text):
-            end = min(start + chunk_size, len(text))
-            if end < len(text):
-                # Nuqta or Probelgacha qidirish, so'zni bo'lmaslik uchun
-                last_space = text.rfind(' ', start, end)
-                if last_space != -1:
-                    end = last_space
-            chunk = text[start:end].strip()
-            if len(chunk) > 50: # Skip very small chunks
-                chunks.append(chunk)
-            start = end - overlap
-            if start >= len(text) - chunk_size // 2:
+        text_len = len(text)
+        
+        while start < text_len:
+            # Chunk tugash nuqtasi
+            end = start + chunk_size
+            
+            if end >= text_len:
+                chunk = text[start:].strip()
+                if len(chunk) > 30:
+                    chunks.append(chunk)
                 break
+                
+            # So'zni bo'lmaslik uchun oxirgi probelni qidiramiz
+            last_space = text.rfind(' ', start, end)
+            if last_space != -1 and last_space > start:
+                end = last_space
+            
+            chunk = text[start:end].strip()
+            if len(chunk) > 30:
+                chunks.append(chunk)
+            
+            # Keyingi start nuqtasi (doimo oldinga yurishini ta'minlaymiz)
+            next_start = end - overlap
+            if next_start <= start:
+                start = end # Agar overlap juda katta bo'lsa, probel yo'q bo'lsa
+            else:
+                start = next_start
+                
         return chunks
 
     def extract_and_chunk_per_file(self):
@@ -106,8 +122,8 @@ class RAGEngine:
             
             if len(text) > 10:
                 raw_chunks = self.chunk_text(text)
+                logger.info(f"Generated {len(raw_chunks)} chunks for {file}")
                 for chunk in raw_chunks:
-                    # Har bir qismga fayl nomini muhrlaymiz
                     all_chunks.append(f"[Kitob/Manba: {file}]\n{chunk}")
                     
         return all_chunks
