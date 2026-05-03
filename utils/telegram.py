@@ -384,6 +384,7 @@ class TelegramNotifier:
 
             elif d == "stat_winrate":
                 st = self.db.get_stats(limit=100)
+                ikb = {'inline_keyboard': [[{'text': "🗑 Statistikani tozalash", 'callback_data': "clear_stats_confirm"}]]}
                 if st['total'] == 0:
                     msg = (f"📊 <b>Statistika (Faqat Signallar):</b>\n\n"
                            f"📈 Jami yuborilgan signallar: <b>{st.get('total_signals', 0)} ta</b>\n"
@@ -395,7 +396,7 @@ class TelegramNotifier:
                            f"📈 Jami signallar: {st.get('total_signals', 0)}\n\n"
                            f"🏆 <b>Win-Rate: {st['winrate']}%</b>\n"
                            f"💰 Jami foyda: {st['profit']} R")
-                await self.send(msg, cid=uid)
+                await self.send(msg, cid=uid, kb=json.dumps(ikb))
 
             try: await sess.post(f"{self.base}/answerCallbackQuery", proxy=self.proxy, json={'callback_query_id': cb['id']})
             except: pass
