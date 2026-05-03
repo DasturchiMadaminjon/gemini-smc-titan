@@ -12,8 +12,6 @@ filters:
   vol_mult_crypto: 1.5
   vol_mult_forex: 1.8
 gemini_ai:
-  api_key: ''
-  api_keys: []
   enabled: true
   model: models/gemini-2.5-flash
 log:
@@ -51,10 +49,6 @@ symbols:
 - SOL/USDT
 - AVAX/USD
 telegram:
-  bot_token: 8672328200:AAHfYFj3QvnlNnKmuVwe2nzgHmRnvmyTZh4
-  chat_id:
-  - 7295947374
-  - 5193211686
   enabled: true
 timeframe: 15m
 tp:

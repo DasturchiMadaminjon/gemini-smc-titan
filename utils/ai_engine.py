@@ -11,8 +11,13 @@ from utils.price_fetcher import get_current_price
 logger = logging.getLogger(__name__)
 
 class AIEngine:
-    def __init__(self, api_keys, model_name="models/gemini-2.5-flash"):
-        # API kalitlarini tayyorlash
+    def __init__(self, api_keys=None, model_name="models/gemini-2.5-flash"):
+        # API kalitlarini tayyorlash (Agar berilmasa, .env dan oladi)
+        if not api_keys:
+            env_keys = os.getenv("GEMINI_API_KEYS") or os.getenv("GEMINI_API_KEY")
+            if env_keys:
+                api_keys = [k.strip() for k in env_keys.split(',') if len(k.strip()) > 20]
+        
         if isinstance(api_keys, str):
             self.api_keys = [k.strip() for k in api_keys.split(',') if len(k.strip()) > 20]
         else:

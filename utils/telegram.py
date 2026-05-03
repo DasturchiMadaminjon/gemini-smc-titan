@@ -6,14 +6,28 @@ logger = logging.getLogger(__name__)
 
 class TelegramNotifier:
     def __init__(self, config, lock):
-        self.cfg = config['telegram']; self.lock = lock
+        self.cfg = config.get('telegram', {})
+        self.lock = lock
+        
+        # 1. Telegram Token va Admins (.env birinchi navbatda)
+        self.token = os.getenv("TELEGRAM_BOT_TOKEN") or self.cfg.get('bot_token')
+        env_chat_ids = os.getenv("TELEGRAM_CHAT_ID")
+        if env_chat_ids:
+            self.admins = [c.strip() for c in env_chat_ids.split(',') if c.strip()]
+        else:
+            self.admins = [str(x).strip() for x in self.cfg.get('chat_id', [])]
+
         is_pa = "PYTHONANYWHERE_DOMAIN" in os.environ
         self.proxy = "http://proxy.server:3128" if is_pa else None
-        self.base = f"https://api.telegram.org/bot{self.cfg['bot_token']}"
-        self.admins = [str(x).strip() for x in self.cfg.get('chat_id', [])]
+        self.base = f"https://api.telegram.org/bot{self.token}"
+        
+        # 2. AI Engine sozlamalari
         self.api_keys = config.get('gemini_ai', {}).get('api_keys', [])
-        self.model_name = config.get('gemini_ai', {}).get('model', 'gemini-2.5-flash')
+        self.model_name = config.get('gemini_ai', {}).get('model', 'models/gemini-2.5-flash')
+        
+        # AI Engine o'zi .env dan yuklashni biladi
         self.ai = AIEngine(self.api_keys, self.model_name)
+        
         self.db = DatabaseManager()
         self._session = None
         self.user_states = {}

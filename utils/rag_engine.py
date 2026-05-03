@@ -9,17 +9,26 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 class RAGEngine:
-    def __init__(self, api_keys, k_base_dir="bilim_bazasi", index_file="vector_db/index.json"):
+    def __init__(self, api_keys=None, k_base_dir="bilim_bazasi", index_file="vector_db/index.json"):
         self.k_base_dir = k_base_dir
         self.index_file = index_file
         
-        # API keylarni yuklash
+        # API keylarni yuklash (Agar berilmasa, .env dan qidiradi)
+        if not api_keys:
+            env_keys = os.getenv("GEMINI_API_KEYS") or os.getenv("GEMINI_API_KEY")
+            if env_keys:
+                api_keys = [k.strip() for k in env_keys.split(',') if len(k.strip()) > 20]
+
         if isinstance(api_keys, str):
-            self.keys = [k.strip() for k in api_keys.split(',')]
+            self.keys = [k.strip() for k in api_keys.split(',') if len(k.strip()) > 20]
         else:
-            self.keys = api_keys
+            self.keys = [k for k in (api_keys or []) if len(k) > 20]
         
-        self.client = genai.Client(api_key=self.keys[0])
+        if not self.keys:
+            logger.error("RAG uchun API kalit topilmadi! .env faylini tekshiring.")
+            self.client = None
+        else:
+            self.client = genai.Client(api_key=self.keys[0])
         
         os.makedirs("vector_db", exist_ok=True)
         os.makedirs(self.k_base_dir, exist_ok=True)
