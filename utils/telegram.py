@@ -412,6 +412,8 @@ class TelegramNotifier:
                 self.user_modules.pop(uid, None)
                 if is_admin:
                     with self.lock: bs['panic_request'] = False
+                await self.send("<b>V27.2 A+ TITAN MASTER</b> botiga xush kelibsiz! 🚀", cid=uid, kb=KB)
+                return off
             
             # ✅ Xavfsizlik filtri: Agar menyu tugmasi bosilsa, har qanday kutish holatini bekor qilish
             MENU_BUTTONS = [

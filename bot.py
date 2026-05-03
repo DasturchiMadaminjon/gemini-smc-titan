@@ -609,7 +609,8 @@ class GeminiBot:
                 logger.error(f"[ALERT LOOP] Xato: {e}")
 
     async def run(self):
-        await asyncio.gather(
+        # Telegram pollingni birinchi va alohida ishga tushiramiz
+        tasks = [
             self.telegram.poll_updates(self.bot_state),
             self._market_loop(),
             self._ai_loop(),
@@ -617,7 +618,9 @@ class GeminiBot:
             self._webhook_loop(),
             self._heartbeat_loop(),
             self._price_alert_loop()
-        )
+        ]
+        print("[SYSTEM] Barcha oqimlar (o'zaro bog'liq bo'lmagan) ishga tushirilmoqda...")
+        await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
     bot_app = GeminiBot()
