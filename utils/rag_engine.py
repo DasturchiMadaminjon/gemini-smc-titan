@@ -107,16 +107,23 @@ class RAGEngine:
                         logger.info(f"Read format TXT: {file}")
                 except: pass
             elif file.endswith('.pdf'):
-                if PyPDF2 is None:
-                    logger.warning(f"Skipping PDF {file} because PyPDF2 is not installed.")
-                    continue
                 try:
                     with open(path, 'rb') as f:
                         reader = PyPDF2.PdfReader(f)
-                        for page in reader.pages:
-                            extracted = page.extract_text()
-                            if extracted: text += extracted + "\n"
-                        logger.info(f"Read format PDF: {file}")
+                        num_pages = len(reader.pages)
+                        logger.info(f"PDF {file} has {num_pages} pages. Extracting...")
+                        
+                        extracted_pages = 0
+                        for i, page in enumerate(reader.pages):
+                            try:
+                                page_text = page.extract_text()
+                                if page_text and len(page_text.strip()) > 5:
+                                    text += page_text + "\n"
+                                    extracted_pages += 1
+                            except Exception as pe:
+                                logger.warning(f"Error extracting page {i} from {file}: {pe}")
+                                
+                        logger.info(f"Successfully extracted text from {extracted_pages}/{num_pages} pages of {file}")
                 except Exception as e:
                     logger.error(f"Failed to read PDF {file}: {e}")
             
