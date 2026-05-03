@@ -410,8 +410,25 @@ class TelegramNotifier:
             if t == "/start":
                 self.user_states.pop(uid, None)
                 self.user_modules.pop(uid, None)
+                current_state = None
+                
+                if uid not in self.onboarding_done:
+                    self.onboarding_done.add(uid)
+                    onboard = (
+                        "🚀 <b>GEMINI SMC TITAN V27.2 ga xush kelibsiz!</b>\n"
+                        "━━━━━━━━━━━━━━━━━━━━\n"
+                        "📖 <b>Qanday foydalanish kerak:</b>\n\n"
+                        "➕ <b>1-qadam:</b> \"📊 Texnik Tahlil\" → instrument tanlang\n"
+                        "➕ <b>2-qadam:</b> Signal avtomatik keladi (sifat ≥75%)\n"
+                        "➕ <b>3-qadam:</b> Signal natijasida ✅ TP yoki ❌ SL bosing\n"
+                        "➕ <b>4-qadam:</b> ❤️ Bot har soat ishlayotganini tasdiqlaydi\n\n"
+                        "ℹ️ <b>Yordam:</b> \"📖 Qo'llanma\" tugmasini bosing"
+                    )
+                    await self.send(onboard, cid=uid)
+
                 if is_admin:
                     with self.lock: bs['panic_request'] = False
+
                 await self.send("<b>V27.2 A+ TITAN MASTER</b> botiga xush kelibsiz! 🚀", cid=uid, kb=KB)
                 return off
             
@@ -424,23 +441,7 @@ class TelegramNotifier:
             ]
             if any(btn in t for btn in MENU_BUTTONS):
                 self.user_states.pop(uid, None)
-                current_state = None # Holatni reset qilamiz
-                # Sprint 3 #4: Onboarding — birinchi marta bosganlar uchun
-                if uid not in self.onboarding_done:
-                    self.onboarding_done.add(uid)
-                    onboard = (
-                        "🚀 <b>GEMINI SMC TITAN V27.2 ga xush kelibsiz!</b>\n"
-                        "━━━━━━━━━━━━━━━━━━━━\n"
-                        "📖 <b>Qanday foydalanish kerak:</b>\n\n"
-                        "➕ <b>1-qadam:</b> \"\ud83d� Texnik Tahlil\" → instrument tanlang\n"
-                        "➕ <b>2-qadam:</b> Signal avtomatik keladi (sifat ≥75%)\n"
-                        "➕ <b>3-qadam:</b> Signal natijasida \u2705 TP yoki \u274c SL bosing\n"
-                        "➕ <b>4-qadam:</b> \u2764️ Bot har soat ishlayotganini tasdiqlaydi\n\n"
-                        "ℹ️ <b>Yordam:</b> \"\ud83d� Qo'llanma\" tugmasini bosing"
-                    )
-                    await self.send(onboard, cid=uid)
-                await self.send("<b>V27.2 A+ TITAN MASTER</b> botiga xush kelibsiz! 🚀", cid=uid, kb=KB)
-                return off
+                current_state = None
 
             # FSM: Alert — Instrument kutish
             if current_state == "wait_alert_sym" and t:
