@@ -13,16 +13,16 @@
       "htf_trend": "bullish"
     },
     "BTC/USDT": {
-      "price": 78798.0390625,
+      "price": 78728.828125,
       "htf_trend": "bullish"
     },
     "ETH/USDT": {
-      "price": 2322.2900390625,
+      "price": 2326.75,
       "htf_trend": "bullish"
     },
     "XRP/USDT": {
-      "price": 1.3954999446868896,
-      "htf_trend": "bearish"
+      "price": 1.398300051689148,
+      "htf_trend": "bullish"
     },
     "USD/JPY": {
       "price": 157.0399932861328,
@@ -45,20 +45,20 @@
       "htf_trend": "bullish"
     },
     "SOL/USDT": {
-      "price": 84.41999816894531,
+      "price": 84.16000366210938,
       "htf_trend": "bearish"
     },
     "AVAX/USD": {
-      "price": 9.199999809265137,
+      "price": 9.100000381469727,
       "htf_trend": "bearish"
     }
   },
   "terminal": {
-    "balance": 6209.08
+    "balance": 6395.35
   },
   "ai_requests": [],
   "loss_streak": 0,
-  "panic_request": true,
+  "panic_request": false,
   "settings": {
     "ai_review_enabled": true
   }

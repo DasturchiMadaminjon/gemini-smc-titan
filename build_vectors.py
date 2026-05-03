@@ -32,13 +32,13 @@ async def start_indexing():
         from utils.rag_engine import RAGEngine
         rag = RAGEngine(keys)
         
-        print("\n⏳ 44 MB hajmli kitoblarni qismlarga bo'lish va Vektorlashtirish boshlanmoqda...")
+        print("\n[INFO] 44 MB hajmli kitoblarni qismlarga bo'lish va Vektorlashtirish boshlanmoqda...")
         print("Bu jarayon kitob hajmiga va internetga qarab 2-5 daqiqa ketishi mumkin.")
         
-        total_chunks = await rag.build_index()
-        print(f"\n✅ TABRIKLAMIZ! Barcha kitoblar sun'iy intellekt xotirasiga {total_chunks} ta vektor qism sifatida muhrlandi!")
+        total_chunks = await rag.build_index(force=True)
+        print(f"\n[OK] Barcha kitoblar sun'iy intellekt xotirasiga {total_chunks} ta vektor qism sifatida muhrlandi!")
     except Exception as e:
-        print(f"❌ Xatolik yuz berdi: {e}")
+        print(f"[ERROR] Xatolik yuz berdi: {e}")
 
 if __name__ == "__main__":
     asyncio.run(start_indexing())

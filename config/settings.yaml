@@ -15,7 +15,7 @@ gemini_ai:
   api_key: ''
   api_keys: []
   enabled: true
-  model: gemini-2.5-flash
+  model: models/gemini-2.5-flash
 log:
   file: logs/bot.log
   level: INFO
@@ -31,7 +31,7 @@ session:
 smc:
   feedback_loop_enabled: false
   fibo_target_tp2: 1.618
-  min_quality: 30.0
+  min_quality: 50.0
   ob_strength: 1.5
   pivot_window: 5
   signal_mode: Faqat BOS

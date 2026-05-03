@@ -1,67 +1,30 @@
-# GEMINI SMC TITAN V27.2 A+ MASTER ENGINE
+# 🔱 Titan V27.2 Master Engine (2026 Edition)
 
-Ushbu dastur Smart Money Concepts (SMC) strategiyasi asosida ishlaydigan, 24/7 avtonom treyding boti va yordamchisidir. U bozor ma'lumotlarini tahlil qiladi, AI (Gemini) yordamida signallarni tasdiqlaydi va foydalanuvchiga Telegram orqali etkazib beradi.
+Bu loyiha **SMC (Smart Money Concepts)** trading strategiyasi asosida qurilgan, 24/7 ishlovchi avtonom AI tizimidir. Loyihaning har bir qismi "Genetik Kod" tamoyillari asosida modullashtirilgan.
 
----
+## 🧬 Genetik Kod Tamoyillari
+1. **TDD (Test-Driven):** Barcha mantiq `tests/` papkasidagi testlar bilan 100% qoplangan.
+2. **AI Native:** Gemini 2.5 Flash va Google Search integratsiyasi orqali real vaqtda internetdan ma'lumot tahlil qiladi.
+3. **RAG (Knowledge):** `bilim_bazasi/` ichidagi barcha PDF va TXT fayllarni o'qib, shogirdlarga professional tushuntirish bera oladi.
+4. **Watchdog:** AWS-da bot to'xtab qolmasligi uchun avtomatik restart va soatlik limit nazoratiga ega.
 
-## 🚀 ASOSIY TAMOYILLAR (STABILITY PILLARS)
+## 📂 Loyiha Strukturasi (DNK Xaritasi)
+- `bot.py`: Tizimning yuragi (Monitor Loop + AI Loop).
+- `core/`: Matematik ko'z (SMC Indicator + Manager).
+- `utils/ai_engine.py`: Tizimning miyasi (Gemini 2.5 + Google Search).
+- `utils/rag_engine.py`: Tizimning xotirasi (Vector Search).
+- `utils/telegram.py`: Tizimning ko'rinishi (Professional UI/UX).
 
-Dastur quyidagi 4 ta ustun ustiga qurilgan:
-1.  **🛡 TDD (100% Test Coverage):** Har bir o'zgarish `pytest` orqali tekshirilgan.
-2.  **🧩 Modullilik:** Har bir modul (Signal, UI, AI, DB) mustaqil ishlaydi.
-3.  **📝 Hujjatlar:** `ARCHITECTURE.md` va `README.md` — barcha jarayonlar uchun yagona manba.
-4.  **🪵 Loglar:** Bot harakati va xatolar real vaqtda loglanadi.
+## 🚀 Ishga tushirish (AWS/Local)
+1. `.env` fayliga `GEMINI_API_KEY` ni joylang.
+2. Virtual muhitni sozlang: `python3 -m venv .venv && source .venv/bin/activate`
+3. Kutubxonalarni o'rnating: `pip install -r requirements.txt`
+4. Botni yoqing: `nohup ./run.sh > bot_log.txt 2>&1 &`
 
----
-
-## 🛠 TEXNOLOGIK STEK
-- **Python 3.11+**
-- **Kutubxonalar:** `aiohttp`, `ccxt`, `google-generativeai`, `pandas`, `PyPDF2`, `python-docx`, `pytest`.
-- **Baza:** SQLite (Optimallashtirilgan INDEX lar bilan).
-- **Muhit:** Local (Windows/Mac) yoki AWS EC2 (Linux).
-
----
-
-## ⚙️ O'RNATISH (INSTALLATION)
-
-### 1. Muhitni sozlash (.env)
-`.env` fayliga kalitlarni yozing:
-```env
-GEMINI_API_KEY=AIzaSyA...
-TELEGRAM_BOT_TOKEN=867232...
-```
-
-### 2. Ishga tushirish (Watchdog bilan)
-Dasturning barqarorligini `watchdog.py` ta'minlaydi:
-```bash
-# Botni monitoring bilan ishga tushirish
-python3 watchdog.py
-```
-*Watchdog bot crash bo'lsa darhol restart qiladi va Telegramga xabar beradi.*
+## 🛠 Xavfsizlik va Nazorat
+- **Loglar:** `bot_log.txt` da barcha harakatlar (Signal yuborish, AI tahlili) muhrlanadi.
+- **Restart:** `run.sh` bot o'chib qolsa, uni avtomatik qayta yoqadi.
+- **Audit:** `tests/trader_audit.py` orqali tizimning strategik sog'lig'ini tekshirish mumkin.
 
 ---
-
-## 📱 BOT IMKONIYATLARI
-
-1.  **📊 Texnik Tahlil:** SMC (FVG, Order Block, BOS) asosida real vaqtda tahlil.
-2.  **🔔 Price Alerts:** Belgilangan narxga yetganda darhol xabar berish.
-3.  **👨‍🏫 Jonli SMC Trener:** Multimodal AI mentor (Matn + Rasm + PDF + Word + Excel tahlili).
-4.  **📈 P&L Hisoboti:** Oylik va haftalik foyda/zarar statistikasi.
-5.  **📜 Signal Tarixi:** Oxirgi yuborilgan 10 ta signalni ko'rish.
-6.  **📊 Tarixiy Audit:** `monthly_audit_backtest.py` orqali 1 oylik strategiya tahlili.
-7.  **⚙️ Admin Panel:** Instrumentlarni qo'shish/o'chirish, risk va sifat filtrlarini sozlash.
-
----
-
-## 🧪 TESTLARNI ISHGA TUSHIRISH
-
-Har qanday yangilanishdan keyin testlarni yurgizish majburiydir:
-```bash
-# Barcha testlarni yurgizish
-pytest tests/
-```
-*Xavfsizlik kamari: `test_signal_delivery.py` signal yetkazib berish zanjirini tekshiradi.*
-
----
-
-**Loyiha holati:** `DEPLOY READY (10/10) - MASTER` ✅
+*Ushbu loyiha 2026-yilning eng so'nggi AI yutuqlari asosida shakllantirilgan.*

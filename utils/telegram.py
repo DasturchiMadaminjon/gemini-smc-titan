@@ -643,10 +643,39 @@ class TelegramNotifier:
                 await self.send(msg, cid=uid)
 
             elif "Test Signal" in t and is_admin:
-                from datetime import datetime, timezone
-                now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
-                self.db.add_signal(now_str, 'EUR/USD', 'BUY', 1.0500, 1.0480, 1.0560, 95.0, "Manual Test Signal")
-                await self.send("🧪 <b>TEST SIGNAL YARATILDI:</b>\n\nInstrument: EUR/USD\nHolat: BUY\nEntry: 1.0500\nSL: 1.0480\nTP: 1.0560", cid=uid)
+                from datetime import datetime, timezone, timedelta
+                uzt = datetime.now(timezone.utc) + timedelta(hours=5)
+                # Haqiqiy signal formatini simulyatsiya qilish
+                msg  = f"🚀 <b>YANGI SIGNAL: EUR/USD (TEST)</b>\n"
+                msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+                msg += f"🔔 Signal: <b>🟢 BUY (LONG)</b>\n"
+                msg += f"💎 Sifat: <code>95.0%</code>\n\n"
+                msg += f"📥 1-Kirish: <code>1.0500</code>\n"
+                msg += f"📥 2-Kirish: <code>1.0492</code>\n"
+                msg += f"🛡 Stop-Loss: <code>1.0480</code>\n\n"
+                msg += f"🎯 Maqsadlar:\n"
+                msg += f"   1. TP1: <code>1.0520</code>\n"
+                msg += f"   2. TP2: <code>1.0560</code>\n"
+                msg += f"   3. TP3: <code>1.0600</code>\n\n"
+                msg += f"🧠 <b>Asos:</b> SMC BOS UP + FVG + Discount Zone\n"
+                msg += f"🤖 <b>AI Xulosasi:</b> Signal trend yo'nalishida va kuchli talab zonasidan qaytmoqda.\n"
+                msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+                msg += f"🕐 <b>UZT:</b> {uzt.strftime('%H:%M')} | 🏛 <b>Terminal:</b> 12:00\n"
+                msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+                msg += f"💰 <b>Position Sizing:</b>\n"
+                msg += f"   ├ Risk: $100.0 (2.0%)\n"
+                msg += f"   ├ SL masofa: 20 pip\n"
+                msg += f"   ├ Hajm: 0.50 Lot\n"
+                msg += f"   └ R:R → TP1: 1:1.0 | TP2: 1:3.0\n"
+                msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+                msg += f"⚡ Titan V27.2 Master"
+                
+                ikb = {'inline_keyboard': [[
+                    {'text': "✅ TP urdi", 'callback_data': "sig_tp:test:EUR/USD"},
+                    {'text': "❌ SL urdi", 'callback_data': "sig_sl:test:EUR/USD"},
+                    {'text': "⏭ O'tkazdim", 'callback_data': "sig_skip:test:EUR/USD"}
+                ]]}
+                await self.send(msg, cid=uid, kb=json.dumps(ikb))
 
             elif "llanma" in t.lower():
                 guide = (
