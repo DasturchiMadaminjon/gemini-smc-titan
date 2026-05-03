@@ -51,7 +51,23 @@ TELEGRAM_BOT_TOKEN=867232...
 
 ---
 
-## 4. ISHGA TUSHIRISH (24/7 AUTONOMOUS)
+---
+
+## 4. BILIM BAZASINI INDEKSLASH (AI MENTOR)
+
+Bot yangi kitoblar va ma'lumotlarni tanishi uchun ularni indekslash shart.
+
+### Yangi fayllar qo'shish:
+1. PDF yoki TXT fayllarni `bilim_bazasi/` papkasiga yuklang.
+2. Quyidagi buyruqni bering:
+```bash
+python3 build_vectors.py
+```
+*Bu buyruq barcha fayllarni tahlil qilib, `vector_db/index.json` faylini yangilaydi.*
+
+---
+
+## 5. ISHGA TUSHIRISH (24/7 AUTONOMOUS)
 
 Botni **Watchdog** bilan birga `screen` ichida ishga tushirish tavsiya etiladi. Bu serverdan chiqsangiz ham bot ishlashini ta'minlaydi.
 

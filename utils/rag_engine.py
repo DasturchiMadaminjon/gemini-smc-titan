@@ -146,7 +146,7 @@ class RAGEngine:
         print(f"✅ Baza tayyor: Muvaffaqiyatli saqlangan qismlar soni: {len(self.documents)}")
         return len(self.documents)
 
-    def search(self, query, top_k=3):
+    def search(self, query, top_k=15):
         """So'rov bilan bazadagi matematika(Cosine Similarity) asosida topish"""
         if not self.embeddings:
             return "Kechirasiz, bilim bazasi indexlanmagan. Iltimos botni yangilang."
