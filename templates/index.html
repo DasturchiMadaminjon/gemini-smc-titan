@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>GEMINI TITAN V27.2 | SMC Control Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <div class="logo">
+            ⚡ GEMINI TITAN <small>V27.2 A+ MASTER</small>
+        </div>
+        <div id="clock">--:--:--</div>
+        <div class="status-badge">
+            <span id="led" class="on"></span>
+            <span id="st">ONLINE</span>
+        </div>
+    </div>
+
+    <div class="grid" id="symbols-grid">
+        <!-- JS orqali to'ldiriladi -->
+        <div class="card">
+            <h3>Kutilmoqda...</h3>
+            <p>Ma'lumotlar yuklanmoqda</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 20px;" class="card">
+        <h3>Oxirgi Signallar</h3>
+        <div id="signals-log">
+            <!-- Signallar shu yerga tushadi -->
+        </div>
+    </div>
+</div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>

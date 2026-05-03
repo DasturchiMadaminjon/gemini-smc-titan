@@ -1,0 +1,86 @@
+=================================================
+O'ZBEKISTON RESPUBLIKASIDA TREYDING QONUNCHILIGI VA SOLIQ SIYOSATI (2026-YIL)
+=================================================
+
+1. O'ZBEKISTONDA LITSENZIYAGA EGA BROKERLAR VA XALQARO PLATFORMALAR JADVALI
+--------------------------------------------------------------------------------------
+O'zbekiston hududida moliya bozorlari va investitsiya vositachilari faoliyatini tartibga soluvchi asosiy davlat organi – Istiqbolli loyihalar milliy agentligi (NAPP - napp.uz) hisoblanadi.
+
+Internetdagi eng mashhur xalqaro brokerlarning ko‘pchiligi O‘zbekiston (NAPP) litsenziyasiga ega emas, ammo chet el (FCA, CySEC, ASIC) litsenziyalari orqali xizmat ko'rsatishadi. Foydalanuvchilar o'z tavakkalchiliklari asosida ulardan foydalanishlari qonun bilan taqiqlanmagan.
+
+| Broker Nomi          | NAPP (O'zbekiston) litsenziyasi | Xalqaro litsenziyalari (Regulyator) |
+|----------------------|---------------------------------|--------------------------------------|
+| Mahalliy Brokerlar   | HA (NAPP tasdiqlagan reyestr)   | O'zbekiston ichki yuridik himoyasi   |
+| Exness               | YO'Q                            | FCA (Buyuk Britaniya), CySEC (Kipr)|
+| RoboForex            | YO'Q                            | FSC (Beliz)                        |
+| XM                   | YO'Q                            | ASIC (Avstraliya), CySEC           |
+| Binance / ByBit      | Maxsus tartib (Kripto-birja)    | Mahalliy tartibga soluvchi normalar|
+
+Muhim yuridik eslatma: Xorijiy ofshor brokerlardan foydalanganda treyder O'zbekiston sud tizimi orqali mablag' himoyasini so'ray olmaydi. 
+Rasmiy ma'lumot manbasi: https://napp.uz/uz/registers (Litsenziyaga ega professional ishtirokchilar reyestri).
+
+2. TREYDERLAR UCHUN DAROMAD SOLIG'I (2026-YIL HOLATIGA)
+--------------------------------------------------------------------------------------
+O‘zbekiston Respublikasi Soliq kodeksiga (2026-yilda o'z kuchida) ko'ra, moliya bozorlaridagi faoliyatdan (Forex, Aksiyalar, Kriptovalyuta) topilgan oylik yoki yillik daromad quyidagicha soliqqa tortiladi:
+
+1) Jismoniy shaxslar (tadbirkor bo'lmaganlar):
+ - Stavka: Yillik sof foydadan 12% (Jismoniy shaxslardan olinadigan daromad solig'i - JShDS).
+ - Tartib: Daromadlar to'g'risida ixtiyoriy deklaratsiyani to'ldirib, soliq organlariga topshiradi.
+
+2) Yakka tartibdagi tadbirkorlar (YATT) va o'zini o'zi band qilganlar:
+ - Stavka: Yillik aylanmasi qisman qisqargan holda 1% dan 4% gacha (aylanmadan olinadigan soliq stavkasi).
+ - Tartib: Agar yillik oborot 1 milliard so'mgacha bo'lsa imtiyozli asosda soliq to'lanadi. 2026-yildan tizim proaktiv tarzda soliq ma'muriyatchiligini oflayn emas, onlayn yuritishni boshlagan.
+
+Soliq manbasi: soliq.uz / lex.uz (O'zbekiston Respublikasi Soliq kodeksi - JShDS bo'limi).
+
+3. FOYDALI YOUTUBE VA RESURS SSILKALARI (Qidiruv bo'yicha namunalar)
+--------------------------------------------------------------------------------------
+Agar O'zbekiston qonunchiligida treyding va soliq masalalarini yanada chuqurroq tushunishni istasangiz, quyidagi video havolalar orqali haqiqiy mutaxassislar fikrlari bilan tanishish tavsiya qilinadi:
+
+- O'zbekistonda Treyding faoliyatiga huquqiy baho:
+  https://www.youtube.com/results?search_query=ozbekistonda+treyding+qonuniyligi+napp
+
+- Treyderlar daromad solig'i to'lashi haqida rasmiy sharhlar:
+  https://www.youtube.com/results?search_query=treyderlar+qanday+soliq+tolaydi+uzbekistan+2025+2026
+
+- Xalqaro Brokerlar tekshiruvi (skamdan himoyalanish):
+  https://www.youtube.com/results?search_query=kripto+va+forex+brokerlar+uzbekistonda
+
+Diqqat! Qonunchilik va soliq stavkalari O'zbekiston Oliy Majlisi va NAPP tomonidan yangilab borilishi mumkin, shuning uchun treyder har yili Soliq (soliq.uz) hamda NAPP (napp.uz) saytiga tayanib faoliyat yuritishi zarur.
+
+4. TEGISHLI QONUN, FARMON VA QARORLAR (O'ZBEKISTON RESPUBLIKASI)
+--------------------------------------------------------------------------------------
+O'zbekistonda moliyaviy bozorlar va raqamli aktivlar aylanmasini tartibga soluvchi eng ustuvor norma ijodkorligi hujjatlari quyidagilar:
+
+- O'zbekiston Respublikasi Prezidentining 03.07.2018 yildagi PQ-3832-sonli Qarori ("O'zbekiston Respublikasida raqamli iqtisodiyotni rivojlantirish chora-tadbirlari to'g'risida"). NAPP tashkilotining poydevori hisoblanadi.
+- O'zbekiston Respublikasi Prezidentining 27.04.2022 yildagi PQ-121-sonli Qarori ("Kripto-aktivlar aylanmasi sohasini yanada takomillashtirish chora-tadbirlari to'g'risida"). P2P hamda noqonuniy platformalardan foydalanish uchun javobgarlik kiritilgan muhim hujjat.
+- Ma'muriy javobgarlik to'g'risidagi kodeksiga oid O'RQ-866-sonli Qonun (2024-yilda qabul qilingan). Unga ko'ra litsenziyasiz yoki noqonuniy kripto-aktivlar va moliya bozorlariga kirish noqonuniy faoliyat deb tan olinishi qayd etilgan.
+- Soliq kodeksi (Jismoniy shaxslarning daromad solig'i - JShDS bo'limlari - 377-380 moddalar). Xorijiy ofshordagi moliya vositalaridan yechib olingan foydani fuqaroning sof daromadi sifatida soliq tushumiga olinishini ko'zda tutadi.
+👉 Rasmiy huquq bazasi havolasi: https://lex.uz/docs/-3806048 (Qarorlar) va https://lex.uz/docs/-4674902 (Soliq)
+
+5. TREYDINGDA ISLOMIY YONDASHUV VA HALOLLIK FATVOLARI (DINIY QOIDALAR)
+--------------------------------------------------------------------------------------
+O‘zbekiston Musulmonlari Idorasi (O'MI) va Xalqaro Fiqh Akademiyalari (AAOIFI) moliya bozorlari savdosi ustida aniq shartli huquqiy bahoni belgilab berishgan. Treyding halol bo'lishi uchun 3 ta katta Shirk va Ribo turidan qochish kerak:
+
+1) Kredit Yelkasi (Leverage) - Brokerdan vaqtincha olib turilgan "Qarz". Dinimizda kredit asosida savdo qilish harom. Shuning uchun "Margin trading" dan uzoq turish lozim, faqat "Spot" (o'z pulingiz) bilan savdo qilish kerak.
+2) Syvap (Swap / Rollover) - Pozitsiyani tunga qoldirgani uchun broker olinadigan yoki beriladigan qo'shimcha foiz ustamasi yoxud ushlanmasi. Ribo hisoblanadi. Halol bo'lishi uchun faqat "Swap-Free" yoki "Islamic Account" (Islomiy hisob) dan foydalanish talab etiladi.
+3) Nomavjud molni sotish (Short) - Qo'lingizda bo'lmagan aktivni sotish joiz emas. Islom Moliya standartlarida foyda ko'rish uchun avval mahsulot (aksiya, oltin, sarmoya) sizning xisobingizga kirim bo'lishi va keyingina sotilishi (Long) ruxsat etiladi.
+👉 Diniy Fiqhiy dalillar izlash ssilkasi: https://www.youtube.com/results?search_query=treyding+halolmi+fatvocenter
+
+6. IJTIMOIY TARMOQLARDAN FAKTLAR QIDIRISH SSILKALARI (Qidiruv bo'yicha namunalar)
+--------------------------------------------------------------------------------------
+Ushbu savollardagi doimiy o'zgarishlarni real vaqtda kuzatib borish maqsadida, quyidagi ssilkalar orqali mahalliy ekspertlarni kuzatishingiz mumkin:
+
+• TELEGRAM / RASMIYLAR (Regulyatorlarning rasmiy yangiliklari):
+  - Soliq Qo'mitasi: https://t.me/soliqnews
+  - Istiqbolli loyihalar milliy agentligi: https://t.me/napp_uz
+
+• INSTAGRAM (O'zbek ekspertlarining soliq va litsenziya maslahatlari izlovi):
+  - Islomiy treyding qoidalari: https://www.instagram.com/explore/tags/haloltreyding/
+  - O'zbekiston Broker litsenziyalari: https://www.instagram.com/explore/tags/treydingsoliq/
+  - Moliya va Qonunga oid postlar: https://www.instagram.com/explore/tags/nappuzbekistan/
+
+• YOUTUBE (Batafsil Master-klasslar havolasi):
+  - O'zbekistonda daromad solig'i topshirish (Forex dan qilingan pul) videosi: https://www.youtube.com/results?search_query=uzbekistonda+treyderlar+deklaratsiya+topshirish
+  - Kriptovalyuta hamda brokerlarga qo'yilgan jarimalar batafsil ko'rinishi: https://www.youtube.com/results?search_query=napp+litsenziyasiz+broker+jarima
+=================================================

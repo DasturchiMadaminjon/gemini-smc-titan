@@ -1,0 +1,44 @@
+=================================================
+WINCALGO INDIKATORI VA ICT KILLZONE (SMC) SAVDO QO'LLANMASI
+=================================================
+
+1. WINCALGO INDIKATORI NIMA?
+--------------------------------------------------------------------------------------
+TradingView platformasida ishlatiladigan eng kuchli SMC va ICT prinsiplarini avtomatlashtirgan indikatorlardan biri bu "WincAlgo" (yoki shunga o'xshash kompleks SMC instumentlari).
+Ustav yuzasidan bu indikator treyderga bozor strukturasini (BOS, CHoCH), qoldirilgan likvidlikni (Order Blocks, FVG) va eng asosiysi **Killzone** taymlarini (Vaqt hududlarini) chartda rangli qutilar bilan avtomatik chizib beradi.
+
+2. KILLZONE NIMA VA U QANDAY ISHLAYDI?
+--------------------------------------------------------------------------------------
+"Killzone" (Qotillik hududi) — bu institutsional yirik treyderlar (banklar) bozorga kirib, juda katta hajmda (volatility) likvidlikni to'playdigan eng aktiv vaqt oraliqlari. Asosan ICT metodikasida ishlatiladi.
+
+Savdoda 3 ta asosiy Killzone qutisi bor:
+1) Asian Killzone (Osiyo Sessiyasi): 
+Odatda bozor konsolidatsiyada (yonlama) harakat qiladi va tepada ham, pastda ham ko'p miqdorda likvidlik (Retail treyderlarning Stop-losslari) yig'iladi. WincAlgo buni ko'pincha sariq yoki kulrang quti qilib chizadi.
+* Qoida: Osiyo sessiyasida KATTA savdolarga kirmaslik kerak, chunki bu vaqtda bozor faqat o'lja yig'adi.
+
+2) London Killzone (London Sessiyasining ochilishi): 
+Odatda Toshkent vaqti bilan 10:00 dan 14:00 gacha davom etadi. 
+* Qoida: London sessiyasi boshlanishi bilan, qoida tariqasida "London Sweep" (Kema tozalanishi) yuz beradi. Ya'ni narx Osiyo sessiyasining likvidligini (tepa yoki pastki qutini) yulib oladi va asosiy kunlik trendni boshlab beradi. WincAlgo buni qizil yozuvli hudud qilib ko'rsatadi.
+
+3) New York Killzone (Nyu York sessiyasining ochilishi): 
+Toshkent vaqti bilan 17:00 dan 20:00 gacha ro'y beradi. Eng katta xajm va yirik portlashlar (impuls) shu yerda joylashgan.
+* Qoida: Nyu-York yo London trendini kuchaytirib davom ettiradi yoki "Reversal" (Narxning keskin ortga burilishi) qilib banklarning kunlik foydasini oqlaydi. WincAlgo NY qutisini odatda ko'k rangda chizishi mumkin.
+
+3. WINCALGO BILAN STRATEGIK KIRISH
+--------------------------------------------------------------------------------------
+Agar WincAlgo indikatoridan foydalansangiz faqat quyidagi amallarni bajaring:
+- Qadam 1: WincAlgo indikatorining sozlamalaridan (Settings) "Show Killzones" (Hududlarni ko'rsatish) yoniq ekanligiga ishonch hosil qiling.
+- Qadam 2: Kuting! Kuting va Osiyo sessiyasi yopilishini kuzating.
+- Qadam 3: London ochiq (Killzone) ro'y berganda, WincAlgo hududining Osiyodan yig'ilgan likvidligi qanday urib ketilishiga qarab "Order Block" dan yoki yuzaga kelgan katta "FVG" dan trade oling. 
+
+Izoh: Hech qachon indikatordagi "Buy/Sell" degan tayyor yozuvlarga ko'r-ko'rona suyanmang, bu SMC mantiqiga to'g'ri kelmaydi. Faqat xudud chizmalaridan (Killzone boxes) yordamchi sifatida foydalaning.
+
+4. YOUTUBE VA VIDEO MANBALAR (WINCALGO & KILLZONE UCHUN)
+--------------------------------------------------------------------------------------
+Killzone strategiyasini va WincAlgo o'rnatilishini vizual tushunish uchun quyidagi qidiruv havolalaridan keng foydalaning:
+- ICT Killzone darslik o'zbek tilida (Nima uchun muhimligi):
+  https://www.youtube.com/results?search_query=ict+killzones+explained+smc+uzbek+tilida
+
+- WincAlgo va SMC indikatorlaridan pul ishlash sirlari sozlamalari (Setup) o'zbek tilida:
+  https://www.youtube.com/results?search_query=wincalgo+smc+indicator+tradingview+killzone+uzbek
+=================================================

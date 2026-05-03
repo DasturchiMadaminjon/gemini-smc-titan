@@ -1,0 +1,70 @@
+exchange:
+  api_key: ''
+  api_secret: ''
+  name: yahoo
+  testnet: true
+filters:
+  min_volat_mult: 0.5
+  rsi_long_max: 62
+  rsi_short_min: 38
+  use_rsi: true
+  use_volume: true
+  vol_mult_crypto: 1.5
+  vol_mult_forex: 1.8
+gemini_ai:
+  api_key: ''
+  api_keys: []
+  enabled: true
+  model: gemini-2.5-flash
+log:
+  file: logs/bot.log
+  level: INFO
+  max_size_mb: 20
+mt5:
+  enabled: false
+session:
+  enabled: true
+  london_end: '16:00'
+  london_start: 08:00
+  ny_end: '20:00'
+  ny_start: '13:00'
+smc:
+  feedback_loop_enabled: false
+  fibo_target_tp2: 1.618
+  min_quality: 30.0
+  ob_strength: 1.5
+  pivot_window: 5
+  signal_mode: Faqat BOS
+  swing_len: 5
+symbols:
+- XAU/USD
+- EUR/USD
+- GBP/USD
+- BTC/USDT
+- ETH/USDT
+- XRP/USDT
+- USD/JPY
+- USD/CAD
+- USD/CHF
+- AUD/USD
+- NZD/USD
+- SOL/USDT
+- AVAX/USD
+telegram:
+  bot_token: 8672328200:AAHfYFj3QvnlNnKmuVwe2nzgHmRnvmyTZh4
+  chat_id:
+  - 7295947374
+  - 5193211686
+  enabled: true
+timeframe: 15m
+tp:
+  breakeven_tp: 1
+  tp1_mult: 1.5
+  tp2_mult: 3.0
+  tp3_mult: 5.0
+trend:
+  fibo_split_enabled: true
+  max_bars_forex: 120
+  risk_perc: 2.0
+  trail_atr: 1.5
+  use_trail: true

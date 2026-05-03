@@ -1,0 +1,65 @@
+{
+  "symbols": {
+    "XAU/USD": {
+      "price": 4644.5,
+      "htf_trend": "bearish"
+    },
+    "EUR/USD": {
+      "price": 1.172333002090454,
+      "htf_trend": "bullish"
+    },
+    "GBP/USD": {
+      "price": 1.357478380203247,
+      "htf_trend": "bullish"
+    },
+    "BTC/USDT": {
+      "price": 78798.0390625,
+      "htf_trend": "bullish"
+    },
+    "ETH/USDT": {
+      "price": 2322.2900390625,
+      "htf_trend": "bullish"
+    },
+    "XRP/USDT": {
+      "price": 1.3954999446868896,
+      "htf_trend": "bearish"
+    },
+    "USD/JPY": {
+      "price": 157.0399932861328,
+      "htf_trend": "bearish"
+    },
+    "USD/CAD": {
+      "price": 1.3588000535964966,
+      "htf_trend": "bearish"
+    },
+    "USD/CHF": {
+      "price": 0.7815300226211548,
+      "htf_trend": "bearish"
+    },
+    "AUD/USD": {
+      "price": 0.7208245992660522,
+      "htf_trend": "bullish"
+    },
+    "NZD/USD": {
+      "price": 0.5897617340087891,
+      "htf_trend": "bullish"
+    },
+    "SOL/USDT": {
+      "price": 84.41999816894531,
+      "htf_trend": "bearish"
+    },
+    "AVAX/USD": {
+      "price": 9.199999809265137,
+      "htf_trend": "bearish"
+    }
+  },
+  "terminal": {
+    "balance": 6209.08
+  },
+  "ai_requests": [],
+  "loss_streak": 0,
+  "panic_request": true,
+  "settings": {
+    "ai_review_enabled": true
+  }
+}

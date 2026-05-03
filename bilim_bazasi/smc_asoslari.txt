@@ -1,0 +1,6 @@
+[Smart Money Concepts Asoslari]
+SMC (Smart Money Concepts) - bu bozorning haqiqiy harakatlantiruvchi kuchlari (banklar, katta xedj-fondlar) izlarini qidirish strategiyasi.
+Bizning SMC Titan botimizda eng muhim narsalar:
+1. Struktura: Narx qayerga ketyapti? (BOS - Break of Structure, CHoCH - Change of Character)
+2. Likvidlik (Liquidity): Reteyl treyderlarning Stop-loss'lari yig'ilgan zonalar. Smart Money har doim bu stoplarni (Inducement / Sweep) yig'ib keyin o'z yo'nalishiga ketadi.
+3. Order Block: Banklar katta xarid yoki sotuvni amalga oshirgan so'nggi sham. Biz shuni Fibo darajalari orqali kutamiz va kiramiz.

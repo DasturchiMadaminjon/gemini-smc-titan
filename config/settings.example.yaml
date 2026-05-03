@@ -1,0 +1,31 @@
+exchange:
+  name: yahoo
+  testnet: true
+  api_key: 'YOUR_API_KEY_HERE'
+  api_secret: 'YOUR_API_SECRET_HERE'
+
+telegram:
+  enabled: true
+  bot_token: 'YOUR_BOT_TOKEN_HERE'
+  chat_id: [7295947374]
+
+gemini_ai:
+  enabled: true
+  model: gemini-1.5-flash
+  api_keys: ['KEY_1', 'KEY_2']
+
+smc:
+  swing_len: 5
+  min_quality: 75.0
+  signal_mode: "A+ Quant"
+
+timeframe: 15m
+
+symbols:
+  - XAU/USD
+  - EUR/USD
+  - BTC/USDT
+
+trend:
+  risk_perc: 2.0
+  use_trail: true

@@ -1,0 +1,31 @@
+# Python Virtual Environments
+.venv/
+venv/
+env/
+.venv_311/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases & Logs
+*.db
+*.log
+logs/
+data/*.db
+
+# Environment Variables
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+bilim_bazasi/*.pdf
+
+*.pdf
