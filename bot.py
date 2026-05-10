@@ -459,17 +459,15 @@ class GeminiBot:
 
                     min_q = self.cfg.get('smc', {}).get('min_quality', 75.0)
                     if sig and sig.quality >= min_q:
-                        print(f"🎯 [POTENTIAL SIGNAL] {s} topildi! Sifat: {sig.quality}%")
+                        logger.info(f"🎯 [SIGNAL DETECTED] {s} | Quality: {sig.quality}% | Direction: {sig.direction}")
                         now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
                         self.db.add_signal(now_str, s, sig.direction, sig.entry, sig.sl, sig.tp1, int(sig.quality), sig.reason)
-                        print(f"📦 [DB] Signal bazaga saqlandi.")
-
-                        # Faqat shu yerda Telegramga yuboriladi (Modular yondashuv)
+                        
                         ai_review_enabled = self.bot_state.get('settings', {}).get('ai_review_enabled', True)
                         safe_ai_reason = None
                         
                         if ai_review_enabled:
-                            print(f"🤖 [AI] Tahlilga yuborilmoqda: {s}...")
+                            logger.info(f"🤖 [AI REVIEW START] Sending {s} signal to Gemini for validation...")
                             sig_data = {
                                 'symbol': s,
                                 'direction': sig.direction,

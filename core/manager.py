@@ -75,6 +75,8 @@ class TradeManager:
         if not sig:
             return
 
+        logger.info(f"🚚 [MANAGER] Signal processing started for {sym} {sig.direction}")
+
         # ✅ #2 Deduplication
         if self._is_duplicate(sym, sig.direction, sig.entry):
             return
@@ -138,16 +140,17 @@ class TradeManager:
         ]]}
 
         # ✅ #1: Chart rasm bilan birga yuborish
-        if chart_buf:
-            try:
+        try:
+            if chart_buf:
                 await self.notifier.send_photo(
                     photo=chart_buf, caption=msg, kb=json.dumps(ikb)
                 )
-            except Exception:
-                # Fallback: rasm kelmasa matn yuboramiz
+                logger.info(f"✅ [MANAGER] Signal {sym} sent with CHART photo.")
+            else:
                 await self.notifier.send(msg, kb=json.dumps(ikb))
-        else:
-            await self.notifier.send(msg, kb=json.dumps(ikb))
+                logger.info(f"✅ [MANAGER] Signal {sym} sent as TEXT (no chart).")
+        except Exception as e:
+            logger.error(f"❌ [MANAGER] Failed to send {sym} to Telegram: {e}")
 
     def handle_loss(self):
         self.loss_streak += 1
