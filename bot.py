@@ -350,12 +350,12 @@ class GeminiBot:
         
         # Klaviaturani startup xabari bilan yuborish
         main_kb = {'keyboard': [
-            [{'text': "📊 Texnik Tahlil"}, {'text': "🌐 Fundamental"}],
-            [{'text': "👨‍🏫 Jonli SMC Trener"}, {'text': "💬 AI Chat Assistant"}],
-            [{'text': "⚡ Scalping AI"}, {'text': "📈 Hisobot (Analytics)"}],
-            [{'text': "⚙️ Sozlamalar"}, {'text': "⚖️ Risk Status"}],
-            [{'text': "📖 Qo'llanma"}, {'text': "🧪 Test Signal"}],
-            [{'text': "🚨 PANIC CLOSE ALL"}]
+            [{'text': "\U0001F4CA Texnik Tahlil"}, {'text': "\U0001F310 Fundamental"}],
+            [{'text': "\U0001F468\u200D\U0001F3EB Jonli SMC Trener"}, {'text': "\U0001F4AC AI Chat Assistant"}],
+            [{'text': "\u26A1 Scalping AI"}, {'text': "\U0001F4C8 Hisobot (Analytics)"}],
+            [{'text': "\u2699\uFE0F Sozlamalar"}, {'text': "\u2696\uFE0F Risk Status"}],
+            [{'text': "\U0001F4D6 Qo'llanma"}, {'text': "\U0001F9EA Test Signal"}],
+            [{'text': "\U0001F6A8 PANIC CLOSE ALL"}]
         ], 'resize_keyboard': True}
         
         # ✅ Watchdog uchun darhol heartbeat yozish
