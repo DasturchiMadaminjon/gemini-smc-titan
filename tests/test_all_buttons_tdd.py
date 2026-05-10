@@ -102,13 +102,14 @@ class TestAsosiyMenuyu:
             f"❌ Texnik Tahlil bosilganda instrument menyusi chiqmadi! {texts}"
 
     @pytest.mark.asyncio
-    async def test_A3_fundamental_instrument_menyusi_ochiladi(self):
-        """🌐 Fundamental → Instrument tanlash inline menyusi."""
+    async def test_A3_fundamental_session_faollashadi(self):
+        """🌐 Fundamental → 'Fundamental Tahlil faollashdi' xabari va in_session holati."""
         n = make_notifier()
         calls, _ = await run(n, msg_update('🌐 Fundamental'))
         texts = [c[0][0] for c in calls]
-        assert any("FUNDAMENTAL" in t or "tanlang" in t for t in texts), \
-            f"❌ Fundamental bosilganda instrument menyusi chiqmadi! {texts}"
+        assert any("Fundamental" in t and "faollashdi" in t for t in texts), \
+            f"❌ Fundamental bosilganda session faollashuv xabari chiqmadi! {texts}"
+        assert n.user_states.get(ADMIN) == "in_session", "❌ in_session holati o'rnatilmadi!"
 
     @pytest.mark.asyncio
     async def test_A4_chat_assistant_tugmasi_sessionni_faollashtiradi(self):

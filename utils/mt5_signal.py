@@ -58,9 +58,11 @@ class MT5SignalSender:
             logger.error(f"MT5 initialize xato: {mt5.last_error()}")
             return False
 
-        login    = self.cfg.get('login', 0)
-        password = self.cfg.get('password', '')
-        server   = self.cfg.get('server', '')
+        import os
+        login_env = os.getenv('MT5_LOGIN')
+        login    = int(login_env) if login_env else self.cfg.get('login', 0)
+        password = os.getenv('MT5_PASSWORD') or self.cfg.get('password', '')
+        server   = os.getenv('MT5_SERVER') or self.cfg.get('server', '')
 
         if login and password and server:
             auth = mt5.login(login=login, password=password, server=server)

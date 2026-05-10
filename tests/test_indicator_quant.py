@@ -107,8 +107,8 @@ class TestQuantIndicator:
         df.at[df.index[-1], 'low'] = 108.0
         
         fvg = ind._find_unmitigated_fvg(df)
-        assert fvg is not None
-        assert fvg[2] == 'bullish'
+        assert fvg['bullish'] is not None
+        assert fvg['bullish'][0] < fvg['bullish'][1]
 
     def test_rr_validation_filter(self, config):
         """R:R filteri (1.5) ishlash testi."""

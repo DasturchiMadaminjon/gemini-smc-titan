@@ -9,35 +9,41 @@ import yaml
 from core.indicator import GeminiIndicator
 
 def generate_bullish_bos_data():
-    """Signallar chiqishi uchun ideal 'Bullish BOS' ma'lumotlarini yaratish."""
-    # 250 ta sham
+    """Signallar chiqishi uchun ideal 'Bullish SMC Pullback' ma'lumotlarini yaratish."""
     n = 250
     dates = pd.date_range("2024-01-01", periods=n, freq="15min")
     
     # 1. Start (pastdagi zona)
     base = [2000] * 150
     
-    # 2. Pivot High (13 ta sham orqali tepaga xarakatcha va qaytish)
-    pivot_formation = [2005]*6 + [2100] + [2005]*6
+    # 2. BOS: Keskin o'sish (2000 -> 2100) va FVG hosil bo'lishi
+    impulse = np.linspace(2000, 2100, 50)
     
-    # 3. Yana pastdan BOS (2100) ni buzib chiqamiz
-    breakout = np.linspace(2005, 2150, 87) # 150 + 13 + 87 = 250
+    # 3. Pullback (Qaytish): 2100 -> 2038 (Bu 0.618 Fibo Discount zonasi)
+    pullback = np.linspace(2100, 2038, 50)
     
-    close = np.concatenate([base, pivot_formation, breakout])
+    close = np.concatenate([base, impulse, pullback])
     
     # Kichik bozor shovqinlari (noise) qo'shish
-    close += np.random.normal(0, 1, n)
+    close += np.random.normal(0, 0.5, n)
     
     df = pd.DataFrame({
-        'open':   close - np.random.uniform(1, 3, n),
-        'high':   close + np.random.uniform(2, 5, n),
-        'low':    close - np.random.uniform(2, 5, n),
+        'open':   close - 1,
+        'high':   close + 2,
+        'low':    close - 2,
         'close':  close,
         'volume': np.random.randint(5000, 15000, n).astype(float)
     }, index=dates)
     
-    # Impuls (Breakout) paytida hajmni oshirish (indicator kuchi uchun)
-    df.iloc[-10:, df.columns.get_loc('volume')] *= 3
+    # Ataylab aniq Bullish FVG hosil qilamiz (Impuls ichida)
+    # i-2 high < i low bo'lishi kerak.
+    # Biz i-2 = 180, i = 182 ni olamiz.
+    df.loc[df.index[180], 'high'] = 2030
+    df.loc[df.index[182], 'low'] = 2035 # Gap of 5
+    
+    # Pullback aynan shu FVG gacha tushishini ta'minlaymiz
+    df.loc[df.index[-1], 'low'] = 2032 # FVG ichiga kirdi
+    df.loc[df.index[-1], 'close'] = 2034
     
     return df
 
@@ -57,6 +63,14 @@ def run_test():
     ind = GeminiIndicator(config)
     
     # 4. Signal qidirish
+    print(f"DEBUG PRE-RUN: recent_high={df['high'].rolling(100).max().iloc[-1]:.2f}, recent_low={df['low'].rolling(100).min().iloc[-1]:.2f}")
+    
+    fvg = ind._find_unmitigated_fvg(df.tail(100))
+    print(f"DEBUG PRE-RUN: FVG holati = {fvg}")
+    
+    zone = ind._get_fibo_zone(df['low'].rolling(100).min().iloc[-1], df['high'].rolling(100).max().iloc[-1], df['close'].iloc[-1])
+    print(f"DEBUG PRE-RUN: Zone = {zone}")
+
     sig = ind.generate_signal(df, "XAU/USD", "15min", loss_streak=0)
     
     if sig:

@@ -8,6 +8,7 @@ except ImportError:
     pass
 
 from datetime import datetime, timezone, timedelta
+from core.genetic_optimizer import GeneticStrategyOptimizer
 from dotenv import load_dotenv
 from utils.persistence import load_state, save_state, load_extras, save_extras
 from utils.exchange import ExchangeClient
@@ -17,6 +18,9 @@ from utils.database import DatabaseManager       # ✅ #2,4: DB integratsiya
 from core.watcher import MarketWatcher           # ✅ #3: MTF Guard
 from core.manager import TradeManager
 from utils.news import NewsWatcher
+from utils.rag_engine import RAGEngine
+from utils.web_search import web_search
+
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -68,14 +72,35 @@ class GeminiBot:
         save_state(self.bot_state)
 
         self.lock = threading.Lock()
+        print("INFO: Telegram modulli yuklanmoqda...")
         self.telegram = TelegramNotifier(self.cfg, self.lock)
+        print("OK: Telegram tayyor.")
+
+        print("INFO: Birja (Exchange) yuklanmoqda...")
         self.exchange = ExchangeClient(self.cfg)
+        print("OK: Birja tayyor.")
+
+        print("INFO: Ma'lumotlar bazasi yuklanmoqda...")
         self.db = DatabaseManager()
+        print("OK: Baza tayyor.")
+
+        print("INFO: Market Watcher yuklanmoqda...")
         self.watcher = MarketWatcher(self.cfg, self.exchange)
+        print("OK: Watcher tayyor.")
+
+        print("INFO: News Watcher yuklanmoqda...")
         self.news = NewsWatcher(self.cfg)
-        self.trades = TradeManager(self.cfg, self.db, type('AlertManager', (), {'telegram': self.telegram}))
+        print("OK: News tayyor.")
+
+        print("INFO: Trade Manager yuklanmoqda...")
+        self.trades = TradeManager(self.cfg, self.db, self.telegram)
+        
+        # 🧬 Genetik Kod: Ongli rivojlanish moduli
+        self.optimizer = GeneticStrategyOptimizer(population_size=10)
+        self.last_evolution = datetime.now()
+        
         self.trades.loss_streak = self.bot_state.get('loss_streak', 0)
-        print(f"[DB] SQLite baza tayyor. loss_streak={self.trades.loss_streak}")
+        print("OK: Trade Manager tayyor.")
 
         # ✅ Deploy tayyorligi: Restart'dan omon qaladigan extras yuklash
         extras = load_extras()
@@ -84,12 +109,26 @@ class GeminiBot:
         # dedup_cache ni manager ga ham qaytarish (str key, restart'dan keyin saqlanadi)
         for h, ts_str in extras['dedup_cache'].items():
             try:
-                from datetime import datetime, timezone
                 self.trades._sent_signals[h] = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc)
             except Exception:
                 pass
+        # 📚 Bilim Bazasi va RAG ulanishi
+        self.rag = RAGEngine(api_keys=self.api_keys)
+        self.telegram.ai.rag = self.rag
+        self.kb_files = self._get_kb_files()
+        
         print(f"[EXTRAS] Yuklandi: {len(self.telegram.price_alerts)} alert user, "
               f"{len(self.trades._sent_signals)} dedup entry")
+
+
+    def _get_kb_files(self):
+        """bilim_bazasi papkasidagi fayllar ro'yxatini olish"""
+        kb_path = 'bilim_bazasi'
+        if not os.path.exists(kb_path):
+            os.makedirs(kb_path)
+            return []
+        return [f for f in os.listdir(kb_path) if os.path.isfile(os.path.join(kb_path, f))]
+
 
     async def _handle_ai(self, req):
         uid = req['chat_id']; s = req['symbol']; t = req['type']
@@ -108,15 +147,16 @@ class GeminiBot:
 
         await self.telegram.send_action(uid, "upload_photo" if img else "typing")
 
+        news_context = ""
+        web_context = ""
+
         if t == 'analytics':
             from utils.analytics import generate_trade_report
             with self.lock:
-                prompt_text = generate_trade_report(self.bot_state)
-            img = None # Analytics uses text data
-            prompt = prompt_text
+                report_data = generate_trade_report(self.bot_state)
+            prompt_text = report_data
         else:
             # ✅ Fundamental tahlil uchun real yangiliklar kontekstini yig'ish
-            news_context = ""
             if t == 'fundamental':
                 try:
                     # news_watcher dan oxirgi yangiliklarni olish
@@ -126,16 +166,36 @@ class GeminiBot:
                 except Exception as e:
                     logger.warning(f"AI news context error: {e}")
 
-            prompts = {
-                'technical':   f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida to'liq texnik tahlil ber.",
-                'scalping':    f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
-                'fundamental': f"Instrument: {s} | Joriy narx: {p}{news_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozir 2026-yil, senga berilgan ma'lumotlar real vaqtdagi ma'lumotlardir.",
-                'chat':        f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
-                'mentor_lessons':       f"{req.get('text', '')}",
-                'mentor_qa':            f"{req.get('text', '')}" + (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
-                'mentor_live_examples': f"{req.get('text', '')}"
-            }
-            prompt = prompts.get(t, prompts['technical'])
+        # 🌐 INTERNET QIDIRUVI — Chat, Fundamental va Mentor uchun real vaqt konteksti
+        if t in ['chat', 'fundamental', 'mentor_lessons', 'mentor_qa', 'mentor_live_examples']:
+            try:
+                # Qidiruv so'rovini tuzish
+                if t == 'fundamental':
+                    search_q = f"{s} fundamental analysis forex news 2026"
+                elif t == 'chat':
+                    user_text_q = req.get('text', '')
+                    search_q = user_text_q[:100] if user_text_q else f"{s} market news"
+                else:  # mentor
+                    search_q = req.get('text', '')[:100] or "SMC Smart Money Concepts trading 2026"
+                
+                loop = asyncio.get_event_loop()
+                web_context = await loop.run_in_executor(None, web_search, search_q, 3)
+                if web_context:
+                    print(f"[WEB] '{search_q[:60]}' uchun internet natijasi olindi.")
+            except Exception as ws_err:
+                print(f"[WEB] Qidiruv xatosi: {ws_err}")
+
+        prompts = {
+            'analytics':   f"{prompt_text if t=='analytics' else ''}",
+            'technical':   f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida to'liq texnik tahlil ber.",
+            'scalping':    f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
+            'fundamental': f"Instrument: {s} | Joriy narx: {p}{news_context}\n{web_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozir 2026-yil, senga berilgan ma'lumotlar real vaqtdagi ma'lumotlardir.",
+            'chat':        (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
+            'mentor_lessons':       (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}",
+            'mentor_qa':            (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
+            'mentor_live_examples': (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}"
+        }
+        prompt = prompts.get(t, prompts['technical'])
 
         # Exponential Backoff: 503/429 bo'lsa 3 marta qayta urinish
         max_retries = 3
@@ -206,6 +266,68 @@ class GeminiBot:
                     await asyncio.sleep(3)
             
             await asyncio.sleep(2)
+    async def _process_pending_signals(self, symbol, df):
+        """Ochiq qolgan signallarni jonli tahlil qilish (Timeout va Breakeven)"""
+        pending = self.db.get_pending_signals()
+        # p = (id, symbol, direction, entry, sl, tp1, timestamp)
+        now = datetime.now(timezone.utc)
+        curr_p = float(df['close'].iloc[-1])
+        
+        for p in pending:
+            p_id, p_sym, p_dir, p_entry, p_sl, p_tp1, p_time_str = p
+            if p_sym != symbol:
+                continue
+                
+            try:
+                # SQLite timestamp ni datetime ga o'girish (u UTC da saqlanadi odatda, yoki naive local)
+                try:
+                    p_time = datetime.strptime(p_time_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+                except ValueError:
+                    try:
+                        p_time = datetime.strptime(p_time_str, '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
+                    except ValueError:
+                        # Fallback parsing
+                        p_time = datetime.fromisoformat(p_time_str).replace(tzinfo=timezone.utc)
+            except Exception as e:
+                print(f"Baza vaqti parsing xatosi (signal {p_id}): {e}")
+                continue
+
+            elapsed_hours = (now - p_time).total_seconds() / 3600
+            
+            # 1. Breakeven & Win Check (Juda soddalashtirilgan jonli check)
+            # Aslida CCXT orqali oxirgi N sham high/low qaralishi kerak, lekin jonli ishlayotganda hozirgi narx yetarli
+            is_win = False
+            is_loss = False
+            if p_dir == 'BUY':
+                if curr_p >= p_tp1: is_win = True
+                elif curr_p <= p_sl: is_loss = True
+            else:
+                if curr_p <= p_tp1: is_win = True
+                elif curr_p >= p_sl: is_loss = True
+
+            if is_win:
+                msg = f"✅ <b>TARGET REACHED!</b>\n\n🎯 {p_sym} signali TP1 ga yetib keldi.\n👉 <i>Maslahat: SL ni kirish narxiga (Zararsizlikka) ko'chiring yoki qisman yoping!</i>"
+                await self.telegram.send(msg)
+                self.db.update_signal_result(p_id, 'WIN')
+                continue
+            elif is_loss:
+                # Agar SL urilgan bo'lsa, xabar jo'natmasak ham mayli, asabiylashmasligi uchun. Yoki yuboramiz.
+                self.db.update_signal_result(p_id, 'LOSS')
+                continue
+
+            # 2. Timeout (12 soatdan oshsa)
+            if elapsed_hours >= 12.0:
+                pnl = curr_p - p_entry if p_dir == 'BUY' else p_entry - curr_p
+                status_text = f"+${pnl:.4f} (Plyusda)" if pnl > 0 else f"-${abs(pnl):.4f} (Minusda)"
+                
+                msg = (
+                    f"⏳ <b>TIMEOUT ALERT (12 soat)</b>\n\n"
+                    f"⚠️ {p_sym} signali uzoq vaqt fletda (Range) qolib ketdi.\n"
+                    f"📊 Hozirgi holat: {status_text}\n\n"
+                    f"💡 <i>Prop-Trading qoidalari asosida kapitalni (marginni) himoya qilish uchun pozitsiyani hozirgi narxda yopishingiz tavsiya qilinadi!</i>"
+                )
+                await self.telegram.send(msg)
+                self.db.update_signal_result(p_id, 'TIMEOUT')
 
     async def _market_loop(self):
         # Startup Message
@@ -232,6 +354,12 @@ class GeminiBot:
             [{'text': "📖 Qo'llanma"}, {'text': "🧪 Test Signal"}],
             [{'text': "🚨 PANIC CLOSE ALL"}]
         ], 'resize_keyboard': True}
+        
+        # ✅ Watchdog uchun darhol heartbeat yozish
+        try:
+            with open('data/heartbeat.txt', 'w') as f: f.write(str(time.time()))
+        except: pass
+
         await self.telegram.send(start_msg, kb=json.dumps(main_kb))
         
         print("Titan V27.2 A+ MASTER ENGINE IS LIVE!")
@@ -277,15 +405,19 @@ class GeminiBot:
 
             for s in self.cfg['symbols']:
                 print(f"[SCANNER] {s} tekshirilmoqda...")
-                df = self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '15m'), limit=200)
-                if df is not None:
+                sig = None
+                df = await self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '15m'), limit=200)
+                if df is not None and not df.empty:
                     curr_p = float(df['close'].iloc[-1])
+                    
+                    # ✅ LIVE PENDING CHECK (Breakeven & Timeout)
+                    await self._process_pending_signals(s, df)
 
                     # ✅ #3: MTF HTF trend ni kesh orqali olish
                     htf_trend = self.watcher.get_cached_trend(s)
                     if htf_trend is None:
                         try:
-                            htf_trend = self.watcher.get_htf_trend(s)
+                            htf_trend = await self.watcher.get_htf_trend(s)
                             if htf_trend:
                                 self.watcher.update_mtf_cache(s, htf_trend, self.lock)
                         except Exception:
@@ -307,30 +439,31 @@ class GeminiBot:
                     # ✅ HTF (H1) ma'lumotlarini olish (Multi-Timeframe uchun)
                     htf_df = None
                     try:
-                        htf_df = self.exchange.fetch_ohlcv(s, '1h', limit=250)
+                        htf_df = await self.exchange.fetch_ohlcv(s, '1h', limit=250)
                     except Exception:
                         pass  # HTF bo'lmasa neutral holatda ishlaydi
 
                     # ✅ Signal generatsiyasi (yangi SMC mantiq bilan)
                     from core.indicator import GeminiIndicator
                     ind = GeminiIndicator(self.cfg)
-                    sig = ind.generate_signal(
-                        df, s, self.cfg.get('timeframe', '15m'),
-                        self.trades.loss_streak, htf_df=htf_df
-                    )
+                    sig = ind.generate_signal(df, s, self.cfg.get('timeframe', '15m'), self.trades.loss_streak, htf_df=htf_df)
+                    if not sig:
+                        import random
+                        if random.randint(1, 10) == 1: print(f"[LOG] {s} da hozircha SMC setup yo'q.")
 
                     min_q = self.cfg.get('smc', {}).get('min_quality', 75.0)
                     if sig and sig.quality >= min_q:
+                        print(f"🎯 [POTENTIAL SIGNAL] {s} topildi! Sifat: {sig.quality}%")
                         now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
                         self.db.add_signal(now_str, s, sig.direction, sig.entry, sig.sl, sig.tp1, int(sig.quality), sig.reason)
-                        print(f"[SIGNAL] {s} ({sig.quality}%) | {sig.reason}")
+                        print(f"📦 [DB] Signal bazaga saqlandi.")
 
                         # Faqat shu yerda Telegramga yuboriladi (Modular yondashuv)
                         ai_review_enabled = self.bot_state.get('settings', {}).get('ai_review_enabled', True)
                         safe_ai_reason = None
                         
                         if ai_review_enabled:
-                            print(f"🤖 Ichki signal AI tahliliga yuborilmoqda: {s}")
+                            print(f"🤖 [AI] Tahlilga yuborilmoqda: {s}...")
                             sig_data = {
                                 'symbol': s,
                                 'direction': sig.direction,
@@ -348,9 +481,12 @@ class GeminiBot:
                             safe_ai_reason = html.escape(ai_reason) if ai_reason else ""
 
                             if not is_appr:
+                                print(f"❌ [AI REJECT] {s} rad etildi.")
                                 msg = f"❌ <b>AI RAD ETDI ({s}):</b>\n\n{safe_ai_reason}\n\n<i>Signal bekor qilindi (Savdoga kiritilmadi).</i>"
                                 await self.telegram.send(msg)
                                 continue
+                            else:
+                                print(f"✅ [AI APPROVE] {s} tasdiqlandi!")
 
                         # ✅ SPRINT 1 #5: Yangilik vaqtida signal bloki
                         news_active = False
@@ -362,7 +498,7 @@ class GeminiBot:
                         except Exception: pass
 
                         if news_active:
-                            print(f"[SKIP-NEWS] {s} — Yangilik vaqtida signal berilmadi.")
+                            print(f"⚠️ [NEWS BLOCK] {s} — Yangilik vaqtida to'xtatildi.")
                             continue
 
                         # ✅ SPRINT 1 #1: Chart rasm generatsiyasi
@@ -372,8 +508,9 @@ class GeminiBot:
                         except Exception as e:
                             print(f"[CHART] Rasm generatsiyasida xato: {e}")
 
+                        print(f"📤 [TELEGRAM] Xabar yuborilmoqda...")
                         await self.trades.process_and_send_signal(s, sig, self.bot_state, ai_reason=safe_ai_reason, chart_buf=chart_buf)
-                        print(f"[SIGNAL] {s} yuborildi!")
+                        print(f"✅ [SUCCESS] {s} yuborildi!")
                 elif sig:
                     print(f"[SKIP] {s} signal sifati past ({sig.quality}% < {min_q}%)")
                 await asyncio.sleep(10)
@@ -383,7 +520,24 @@ class GeminiBot:
                     f.write(str(time.time()))
             except: pass
 
-            print("[SYSTEM] Skanerlash yakunlandi. 3 daqiqa kutish...")
+            # 🧬 [GENETIC EVOLUTION] Har 1 soatda sozlamalarni optimallashtirish
+            if datetime.now() - self.last_evolution > timedelta(hours=1):
+                try:
+                    history = self.db.get_stats(limit=100).get('history', [])
+                    if len(history) >= 5:
+                        best_dna = self.optimizer.evolve(history)
+                        new_q = round(best_dna['min_quality'], 1)
+                        
+                        if abs(self.cfg['smc'].get('min_quality', 75) - new_q) > 1.0:
+                            print(f"[GENETIC] DNK yangilandi: Min Quality -> {new_q}%")
+                            self.cfg['smc']['min_quality'] = new_q
+                            with open('config/settings.yaml', 'w') as f:
+                                yaml.dump(self.cfg, f)
+                    self.last_evolution = datetime.now()
+                except Exception as e:
+                    print(f"[GENETIC ERROR] Evolyutsiya xatosi: {e}")
+
+            print(f"[SYSTEM] Skanerlash yakunlandi ({datetime.now().strftime('%H:%M:%S')}). 3 daqiqa kutish...", flush=True)
             await asyncio.sleep(180)
 
     async def _news_loop(self):
@@ -431,7 +585,7 @@ class GeminiBot:
                                 continue
 
                             # Joriy narxni olish (yfinance/ccxt abstraktsiyasi orqali)
-                            df_price = self.exchange.fetch_ohlcv(symbol, '1m', limit=2)
+                            df_price = await self.exchange.fetch_ohlcv(symbol, '1m', limit=2)
                             if df_price is None or df_price.empty:
                                 raise Exception("Narxni olib bo'lmadi")
                             price = df_price['close'].iloc[-1]
@@ -640,10 +794,15 @@ if __name__ == "__main__":
             print(f"⚠️ Dashboard ogohlantirishi: {e}")
 
     # Botning asosiy halqasi (Asyncio) ishga tushadi
-    print(f"Titan V27.2 A+ MASTER ENGINE IS LIVE! (Server: {'PA' if is_pa else 'Local'})")
+    print(f"Titan V27.2 A+ MASTER ENGINE IS LIVE! (Server: {'PA' if is_pa else 'Local'})", flush=True)
     try:
         asyncio.run(bot_app.run())
     except KeyboardInterrupt:
-        print("\n[STOP] Bot to'xtatildi.")
+        print("\n[STOP] Bot foydalanuvchi tomonidan to'xtatildi (Ctrl+C).", flush=True)
     except Exception as e:
-        print(f"[ERROR] Kutilmagan global xato: {e}")
+        print(f"\n[FATAL ERROR] Bot to'xtadi: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
+        logger.critical(f"FATAL ERROR: {e}", exc_info=True)
+    finally:
+        print("[SYSTEM] Tizim yopilmoqda.", flush=True)

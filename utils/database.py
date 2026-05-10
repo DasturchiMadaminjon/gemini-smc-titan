@@ -6,7 +6,9 @@ from datetime import datetime, timezone, timedelta
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    def __init__(self, db_path="logs/bot_data.db"):
+    def __init__(self, db_path=None):
+        if not db_path:
+            db_path = os.getenv("DB_PATH", "logs/bot_data.db")
         self.db_path = db_path
         self._init_db()
 
@@ -102,7 +104,7 @@ class DatabaseManager:
         self._execute_query(query, (time_str, symbol, direction.upper(), entry, sl, tp1, quality, reason, sig_hash))
 
     def get_pending_signals(self):
-        query = "SELECT id, symbol, direction, entry, sl, tp1 FROM signals WHERE result = 'PENDING'"
+        query = "SELECT id, symbol, direction, entry, sl, tp1, timestamp FROM signals WHERE result = 'PENDING'"
         return self._execute_query(query, (), is_fetch=True)
 
     def update_signal_result(self, sig_id, result):

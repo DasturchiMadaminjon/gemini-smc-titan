@@ -18,7 +18,7 @@ async def test_monitor_loop_error_handling(monkeypatch):
 
     # 2. Exchange mock
     mock_exchange = MagicMock()
-    def fake_fetch_ohlcv(symbol, timeframe, limit):
+    async def fake_fetch_ohlcv(symbol, timeframe, limit):
         import pandas as pd
         if symbol == "ERROR/USD":
             raise Exception("API Error")

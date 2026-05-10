@@ -29,7 +29,7 @@ session:
 smc:
   feedback_loop_enabled: false
   fibo_target_tp2: 1.618
-  min_quality: 50.0
+  min_quality: 75.0
   ob_strength: 1.5
   pivot_window: 5
   signal_mode: Faqat BOS

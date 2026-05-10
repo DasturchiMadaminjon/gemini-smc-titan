@@ -16,11 +16,14 @@ Ushbu qo'llanma botning asosiy funksiyalaridan qanday samarali foydalanishni tus
 - **📖 Qo'llanma**: Ushbu menyular bo'yicha yordam.
 
 ### 2. Admin Buyruqlari (Maxsus Ruxsat)
-- **⚙️ Sozlamalar**: 
-    - `🪙 Instrumentlar`, `⏱ Taymfreym`, `💰 Risk %`, `⚙️ Sifat` kabilarni tahrirlash.
-    - `🤖 AI Xulosa`: Skanerdan o'tgan signallarni telegramga tushishidan oldin AI filtridan o'tkazishni boshqarish (Yoqish/O'chirish).
+- **⚙️ Sifat**: 
+    - `🟢 30%`: Yumshoq rejim (ko'p signal, ko'p risk).
+    - `🟡 50%`: O'rta rejim.
+    - `🟠 75%`: Tavsiya etilgan (optimal) rejim.
+    - `🔴 90%`: Faqat eng kuchli signallar.
 - **⚖️ Risk Status**: Botning joriy "Sog'lig'i"ni (Balans va Loss Streak) ko'rsatadi.
 - **🧪 Test Signal**: Qo'lda sun'iy signal kiritib, tizimni va analitikani sinovdan o'tkazish.
+- **🔍 Backtest (Apr-May)**: `python3 backtest_100_signals.py` buyrug'i orqali aprel oyidan beri bo'lgan tarixni tahlil qilish va natijani Telegramga olish.
 - **🚨 PANIC CLOSE ALL**: Barcha ochiq savdolarni shoshilinch yopish va bot ishini vaqtincha to'xtatish.
 
 ---

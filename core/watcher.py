@@ -14,10 +14,10 @@ class MarketWatcher:
         self.timeframe = config.get('timeframe', '15m')
         self._mtf_cache = {}
 
-    def load_symbol_data(self, symbol: str, bot_state, state_lock) -> Optional[pd.DataFrame]:
-        """Birjadan OHLCV ma'lumotlarini olish va dashboardni yangilash"""
+    async def load_symbol_data(self, symbol: str, bot_state, state_lock) -> Optional[pd.DataFrame]:
+        """Birjadan OHLCV ma'lumotlarini asinxron olish va dashboardni yangilash"""
         try:
-            df = self.exchange.fetch_ohlcv(symbol, self.timeframe, limit=300)
+            df = await self.exchange.fetch_ohlcv(symbol, self.timeframe, limit=300)
             if df is None or len(df) < 60:
                 logger.warning(f"{symbol}: Yetarli ma'lumot yo'q")
                 return None
@@ -35,10 +35,10 @@ class MarketWatcher:
             logger.error(f"{symbol} ma'lumot olishda xato: {e}")
             return None
 
-    def get_ltf_data(self, symbol: str, tf: str = '5m') -> Optional[str]:
-        """Skalping uchun pastki timeframe ma'lumotlarini olish"""
+    async def get_ltf_data(self, symbol: str, tf: str = '5m') -> Optional[str]:
+        """Skalping uchun pastki timeframe ma'lumotlarini asinxron olish"""
         try:
-            df_ltf = self.exchange.fetch_ohlcv(symbol, tf, limit=60)
+            df_ltf = await self.exchange.fetch_ohlcv(symbol, tf, limit=60)
             if df_ltf is None or len(df_ltf) < 20:
                 return None
             
@@ -54,8 +54,8 @@ class MarketWatcher:
             logger.error(f"LTF tahlil xatosi ({symbol}): {e}")
             return None
 
-    def get_htf_trend(self, symbol: str) -> Optional[str]:
-        """Yuqori timeframe trendini aniqlash (MTF PRO)"""
+    async def get_htf_trend(self, symbol: str) -> Optional[str]:
+        """Yuqori timeframe trendini aniqlash (Asinxron MTF PRO)"""
         mtf_cfg = self.cfg.get('mtf', {})
         if not mtf_cfg.get('enabled', True):
             return None
@@ -64,7 +64,8 @@ class MarketWatcher:
         ema_p = mtf_cfg.get('ema_period', 200)
 
         try:
-            df_htf = self.exchange._yf_fetch(symbol, htf, limit=ema_p + 20)
+            # fetch_ohlcv endi asinxron va u avtomatik ravishda yf_fetch ni executor da chaqiradi
+            df_htf = await self.exchange.fetch_ohlcv(symbol, htf, limit=ema_p + 20)
             if df_htf is None or len(df_htf) < ema_p:
                 return None
             

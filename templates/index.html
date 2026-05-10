@@ -2,41 +2,74 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <title>GEMINI TITAN V27.2 | SMC Control Center</title>
+    <title>TITAN V27.2 | GENETIC MASTER ENGINE</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div class="dashboard-container">
+    <!-- 🧬 GENETIC EVOLUTION MONITOR -->
+    <div class="genetic-monitor">
+        <div>
+            <span style="color: var(--accent-purple); font-weight: 800; margin-right: 10px;">🧬 GENETIC ENGINE:</span>
+            <span id="evolution-status">Evolving Optimization...</span>
+        </div>
+        <div id="mutation-cycle">
+            Cycle: <span id="gen-cycle">V27.2-BETA</span> | 
+            Fittest Score: <span id="fitness-score">0.982</span>
+        </div>
+    </div>
+
     <div class="header">
         <div class="logo">
-            ⚡ GEMINI TITAN <small>V27.2 A+ MASTER</small>
+            ⚡ TITAN <small>MASTER ENGINE</small>
         </div>
-        <div id="clock">--:--:--</div>
-        <div class="status-badge">
-            <span id="led" class="on"></span>
-            <span id="st">ONLINE</span>
+        <div id="clock">00:00:00</div>
+        <div class="status-panel">
+            <div class="badge online" id="st">SYSTEM LIVE</div>
+            <div class="badge evolution">AI VALIDATION: ON</div>
+            <button class="btn btn-panic" onclick="triggerPanic()">PANIC STOP</button>
         </div>
     </div>
 
+    <!-- 📊 MARKET GRID -->
     <div class="grid" id="symbols-grid">
-        <!-- JS orqali to'ldiriladi -->
-        <div class="card">
-            <h3>Kutilmoqda...</h3>
-            <p>Ma'lumotlar yuklanmoqda</p>
+        <!-- JS orqali dinamik to'ldiriladi -->
+        <div class="card" style="display: flex; justify-content: center; align-items: center; min-height: 200px;">
+            <div class="loader">SYNCHRONIZING...</div>
         </div>
     </div>
 
-    <div style="margin-top: 20px;" class="card">
-        <h3>Oxirgi Signallar</h3>
+    <!-- 🤖 AI REPORT & SIGNALS -->
+    <div class="signals-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 1.5rem; letter-spacing: 1px;">📡 REAL-TIME SIGNALS</h2>
+            <div id="last-update" style="font-size: 0.8rem; color: var(--text-dim);">Last Scan: Just now</div>
+        </div>
+        
         <div id="signals-log">
             <!-- Signallar shu yerga tushadi -->
+            <div class="signal-row" style="color: var(--text-dim);">
+                <span>Symbol</span>
+                <span>Type</span>
+                <span>Entry / Reason</span>
+                <span>Quality</span>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="/static/script.js"></script>
+<script>
+    function triggerPanic() {
+        if(confirm("DIQQAT! Barcha jarayonlarni to'xtatishga aminmisiz?")) {
+            fetch('/api/panic', {method: 'POST'})
+            .then(r => r.json())
+            .then(d => alert("PANIC MODE ACTIVATED!"));
+        }
+    }
+</script>
 </body>
 </html>

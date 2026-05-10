@@ -1,56 +1,56 @@
 {
   "symbols": {
     "XAU/USD": {
-      "price": 4644.5,
+      "price": 4574.60009765625,
       "htf_trend": "bearish"
     },
     "EUR/USD": {
-      "price": 1.172333002090454,
-      "htf_trend": "bullish"
+      "price": 1.1697274446487427,
+      "htf_trend": "bearish"
     },
     "GBP/USD": {
-      "price": 1.357478380203247,
+      "price": 1.3547931909561157,
       "htf_trend": "bullish"
     },
     "BTC/USDT": {
-      "price": 78728.828125,
+      "price": 80937.359375,
       "htf_trend": "bullish"
     },
     "ETH/USDT": {
-      "price": 2326.75,
+      "price": 2376.989990234375,
       "htf_trend": "bullish"
     },
     "XRP/USDT": {
-      "price": 1.398300051689148,
+      "price": 1.4062999486923218,
       "htf_trend": "bullish"
     },
     "USD/JPY": {
-      "price": 157.0399932861328,
+      "price": 157.76600646972656,
       "htf_trend": "bearish"
     },
     "USD/CAD": {
-      "price": 1.3588000535964966,
+      "price": 1.361649990081787,
       "htf_trend": "bearish"
     },
     "USD/CHF": {
-      "price": 0.7815300226211548,
+      "price": 0.7835500240325928,
       "htf_trend": "bearish"
     },
     "AUD/USD": {
-      "price": 0.7208245992660522,
+      "price": 0.7178235650062561,
       "htf_trend": "bullish"
     },
     "NZD/USD": {
-      "price": 0.5897617340087891,
+      "price": 0.5886161923408508,
       "htf_trend": "bullish"
     },
     "SOL/USDT": {
-      "price": 84.16000366210938,
-      "htf_trend": "bearish"
+      "price": 84.87000274658203,
+      "htf_trend": "bullish"
     },
     "AVAX/USD": {
-      "price": 9.100000381469727,
-      "htf_trend": "bearish"
+      "price": 9.380000114440918,
+      "htf_trend": "bullish"
     }
   },
   "terminal": {
@@ -60,6 +60,7 @@
   "loss_streak": 0,
   "panic_request": false,
   "settings": {
-    "ai_review_enabled": true
+    "ai_review_enabled": true,
+    "tz_offset": 8
   }
 }

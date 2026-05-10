@@ -88,7 +88,7 @@ class RAGEngine:
         return chunks
 
     def extract_text_advanced(self, file_path):
-        """Fayldan matnni 100% aniqlikda chiqarish (PDF, Word, TXT)"""
+        """Fayldan matnni 100% aniqlikda chiqarish (PDF, Word, Excel, JSON, CSV, TXT)"""
         ext = os.path.splitext(file_path)[1].lower()
         text = ""
         try:
@@ -106,6 +106,23 @@ class RAGEngine:
                 import docx
                 doc = docx.Document(file_path)
                 text = "\n".join([p.text for p in doc.paragraphs])
+            elif ext == '.xlsx':
+                import openpyxl
+                wb = openpyxl.load_workbook(file_path, data_only=True)
+                for sheet in wb.sheetnames:
+                    ws = wb[sheet]
+                    for row in ws.iter_rows(values_only=True):
+                        text += " | ".join([str(cell) for cell in row if cell is not None]) + "\n"
+            elif ext == '.csv':
+                import csv
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    reader = csv.reader(f)
+                    for row in reader:
+                        text += " | ".join(row) + "\n"
+            elif ext == '.json':
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    text = json.dumps(data, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"Extraction error ({file_path}): {e}")
         return text
@@ -155,11 +172,14 @@ class RAGEngine:
 
     def search(self, query, top_k=8):
         """Vektorli qidiruv va fayllar ro'yxati nazorati (Fix 404)"""
-        # 1. Fayllar ro'yxati haqida so'ralganini aniqlash
-        is_list_query = any(x in query.lower() for x in ["qanday kitob", "nechta fayl", "fayllar ro'yxati", "nimalar bor", "qanaqa kitob"])
+        # 1. Fayllar ro'yxati haqida so'ralganini aniqlash (Yaxshilangan mantiq)
+        is_list_query = any(x in query.lower() for x in [
+            "qanday bilim", "nechta fayl", "fayllar ro'yxati", "nimalar bor", 
+            "nima bor", "nimar bor", "qanaqa kitob", "qanday kitob", "kitoblar", "bilimlar"
+        ])
         stats = self.get_kb_stats()
-        available_files = "\n".join([f"- {f['name']} ({f['size_kb']} KB)" for f in stats['files']])
-        context = f"Tizimdagi haqiqiy fayllar ro'yxati:\n{available_files}\n\n" if is_list_query else ""
+        available_files = "\n".join([f"- {f['name']}" for f in stats['files']])
+        context = f"Tizimdagi haqiqiy fayllar (kitoblar) ro'yxati:\n{available_files}\n\n" if is_list_query else ""
 
         # 2. Agar index bo'lmasa yoki qidiruv xatosi bo'lsa, faqat ro'yxatni qaytarish
         if not self.embeddings: 

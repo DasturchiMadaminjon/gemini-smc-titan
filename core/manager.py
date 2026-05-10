@@ -140,14 +140,14 @@ class TradeManager:
         # ✅ #1: Chart rasm bilan birga yuborish
         if chart_buf:
             try:
-                await self.notifier.telegram.send_photo(
+                await self.notifier.send_photo(
                     photo=chart_buf, caption=msg, kb=json.dumps(ikb)
                 )
             except Exception:
                 # Fallback: rasm kelmasa matn yuboramiz
-                await self.notifier.telegram.send(msg, kb=json.dumps(ikb))
+                await self.notifier.send(msg, kb=json.dumps(ikb))
         else:
-            await self.notifier.telegram.send(msg, kb=json.dumps(ikb))
+            await self.notifier.send(msg, kb=json.dumps(ikb))
 
     def handle_loss(self):
         self.loss_streak += 1

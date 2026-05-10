@@ -86,7 +86,7 @@ class TestIndicatorSignalGeneration:
                 'sweep_up': False, 'sweep_down': False
             }), \
              patch.object(ind, '_get_fibo_zone', return_value='discount'), \
-             patch.object(ind, '_find_unmitigated_fvg', return_value=(1.0500, 1.0510, 'bullish')), \
+             patch.object(ind, '_find_unmitigated_fvg', return_value={'bullish': (1.0500, 1.0510), 'bearish': None}), \
              patch.object(ind, '_get_trend', return_value='bullish'):
 
             signal = ind.generate_signal(mock_df, "EUR/USD", "15m", loss_streak=0)
@@ -143,14 +143,13 @@ class TestSignalDeliveryPipeline:
         manager = TradeManager(mock_cfg, db_mock, notifier)
         # TradeManager notifier ni telegram atributi orqali ishlatadi
         manager.notifier = MagicMock()
-        manager.notifier.telegram = MagicMock()
-        manager.notifier.telegram.send = AsyncMock()
+        manager.notifier.send = AsyncMock()
 
         bot_state = {'terminal': {'balance': 10000.0}}
         await manager.process_and_send_signal("EUR/USD", valid_buy_signal, bot_state, ai_reason="AI: Signal kuchli!")
 
-        assert manager.notifier.telegram.send.called, \
-            "TDD XATO: Signal jo'natilmadi! TradeManager.notifier.telegram.send() chaqirilmadi."
+        assert manager.notifier.send.called, \
+            "TDD XATO: Signal jo'natilmadi! TradeManager.notifier.send() chaqirilmadi."
 
     @pytest.mark.asyncio
     async def test_telegram_message_contains_required_fields(self, mock_cfg, valid_buy_signal):
@@ -169,8 +168,7 @@ class TestSignalDeliveryPipeline:
             captured_msg.append(msg)
 
         manager.notifier = MagicMock()
-        manager.notifier.telegram = MagicMock()
-        manager.notifier.telegram.send = AsyncMock(side_effect=capture_send)
+        manager.notifier.send = AsyncMock(side_effect=capture_send)
 
         bot_state = {'terminal': {'balance': 10000.0}}
         await manager.process_and_send_signal("EUR/USD", valid_buy_signal, bot_state, ai_reason="Test AI Reason")
@@ -195,8 +193,7 @@ class TestSignalDeliveryPipeline:
 
         captured_msg = []
         manager.notifier = MagicMock()
-        manager.notifier.telegram = MagicMock()
-        manager.notifier.telegram.send = AsyncMock(side_effect=lambda m, **kw: captured_msg.append(m))
+        manager.notifier.send = AsyncMock(side_effect=lambda m, **kw: captured_msg.append(m))
 
         bot_state = {'terminal': {'balance': 5000.0}}
         await manager.process_and_send_signal("EUR/USD", valid_buy_signal, bot_state, ai_reason="KUCHLI SIGNAL!")
@@ -212,13 +209,12 @@ class TestSignalDeliveryPipeline:
         notifier = TelegramNotifier(mock_cfg, lock)
         manager = TradeManager(mock_cfg, db_mock, notifier)
         manager.notifier = MagicMock()
-        manager.notifier.telegram = MagicMock()
-        manager.notifier.telegram.send = AsyncMock()
+        manager.notifier.send = AsyncMock()
 
         bot_state = {'terminal': {'balance': 5000.0}}
         await manager.process_and_send_signal("EUR/USD", None, bot_state)
 
-        assert not manager.notifier.telegram.send.called, \
+        assert not manager.notifier.send.called, \
             "❌ Signal None bo'lsa xabar jo'natilmasligi kerak!"
 
 
@@ -243,7 +239,7 @@ class TestFullSignalChainIntegration:
                 'sweep_up': False, 'sweep_down': False
             }), \
              patch.object(ind, '_get_fibo_zone', return_value='discount'), \
-             patch.object(ind, '_find_unmitigated_fvg', return_value=(1.0500, 1.0510, 'bullish')), \
+             patch.object(ind, '_find_unmitigated_fvg', return_value={'bullish': (1.0500, 1.0510), 'bearish': None}), \
              patch.object(ind, '_get_trend', return_value='bullish'):
 
             signal = ind.generate_signal(mock_df, "EUR/USD", "15m", loss_streak=0)
@@ -258,8 +254,7 @@ class TestFullSignalChainIntegration:
 
         captured = []
         manager.notifier = MagicMock()
-        manager.notifier.telegram = MagicMock()
-        manager.notifier.telegram.send = AsyncMock(side_effect=lambda m, **kw: captured.append(m))
+        manager.notifier.send = AsyncMock(side_effect=lambda m, **kw: captured.append(m))
 
         bot_state = {'terminal': {'balance': 10000.0}}
         await manager.process_and_send_signal("EUR/USD", signal, bot_state, ai_reason="E2E Test OK")

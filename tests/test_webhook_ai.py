@@ -6,7 +6,8 @@ from bot import GeminiBot
 
 @pytest.fixture
 def mock_ai_engine():
-    engine = AIEngine(api_keys=["dummy_key"])
+    test_key = "AIza" + "x" * 35
+    engine = AIEngine(api_keys=[test_key])
     engine.get_analysis = AsyncMock(return_value="Tasdiqlayman: Bu signal SMC mantiqiga mos va xavfsiz.")
     return engine
 
@@ -27,11 +28,12 @@ async def test_evaluate_trade_signal_rejected(mock_ai_engine):
 
 @pytest.mark.asyncio
 async def test_evaluate_trade_signal_draft_mode(mock_ai_engine):
-    mock_ai_engine.get_analysis = AsyncMock(return_value="⚠️ DRAFT MODE: Limit tugadi.")
+    # AI limiti tugasa, u endi Tasdiqlamaydi
+    mock_ai_engine.get_analysis = AsyncMock(return_value="❌ Barcha API kalitlar band.")
     signal_data = {"symbol": "EUR/USD", "direction": "buy", "entry": 1.10}
     is_appr, reason = await mock_ai_engine.evaluate_trade_signal(signal_data)
-    assert is_appr is True
-    assert "AI limiti tugadi" in reason
+    assert is_appr is False
+    assert "kalitlar band" in reason
 
 def test_webhook_queue_creation(tmp_path):
     # This is a basic test to ensure our dashboard route would write json

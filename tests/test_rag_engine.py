@@ -12,12 +12,15 @@ class TestRAGEngine:
     @patch('utils.rag_engine.genai.Client')
     def test_rag_engine_initialization(self, mock_client):
         # Mock client initialization
-        engine = RAGEngine(api_keys="test_key")
+        test_key = "AIza" + "x" * 35
+        engine = RAGEngine(api_keys=test_key)
         assert engine is not None
-        assert engine.keys == ["test_key"]
+        assert len(engine.keys) == 1
+        assert engine.keys[0] == test_key
 
     def test_chunk_text(self):
-        engine = RAGEngine(api_keys="test_key")
+        test_key = "AIza" + "x" * 35
+        engine = RAGEngine(api_keys=test_key)
         text = "Bu juda uzun matn bo'lib, uni bir nechta bo'laklarga ajratish kerak. " * 20
         chunks = engine.chunk_text(text, chunk_size=100, overlap=20)
         assert len(chunks) > 1
@@ -27,6 +30,7 @@ class TestRAGEngine:
     @patch('utils.rag_engine.genai.Client')
     async def test_build_index(self, mock_client_class):
         mock_client = mock_client_class.return_value
+        test_key = "AIza" + "x" * 35
         # Mock embedding response
         mock_emb = MagicMock()
         mock_emb.embeddings = [MagicMock(values=[0.1, 0.2, 0.3])]
@@ -37,7 +41,7 @@ class TestRAGEngine:
         with open("test_kb/test.txt", "w", encoding="utf-8") as f:
             f.write("Salom, bu test ma'lumoti. Bu matn etarli darajada uzun bo'lishi kerakki, RAG engine uni qabul qilsin.")
             
-        engine = RAGEngine(api_keys="test_key", k_base_dir="test_kb", index_file="test_index.json")
+        engine = RAGEngine(api_keys=test_key, k_base_dir="test_kb", index_file="test_index.json")
         count = await engine.build_index(force=True)
         
         assert count > 0
@@ -51,11 +55,12 @@ class TestRAGEngine:
     @patch('utils.rag_engine.genai.Client')
     def test_search(self, mock_client_class):
         mock_client = mock_client_class.return_value
+        test_key = "AIza" + "x" * 35
         mock_emb = MagicMock()
         mock_emb.embeddings = [MagicMock(values=[0.1, 0.2, 0.3])]
         mock_client.models.embed_content.return_value = mock_emb
         
-        engine = RAGEngine(api_keys="test_key")
+        engine = RAGEngine(api_keys=test_key)
         engine.documents = ["Salom dunyo", "Test xabari"]
         engine.embeddings = [np.array([0.1, 0.2, 0.3]), np.array([0.9, 0.8, 0.7])]
         

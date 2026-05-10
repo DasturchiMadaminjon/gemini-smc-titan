@@ -49,22 +49,40 @@ class TelegramNotifier:
             self._session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=45))
         return self._session
 
-    async def send(self, t, cid=None, kb=None):
+    async def send(self, text: str, cid=None, kb=None):
+        if not cid:
+            cids = self.admins
+        else:
+            cids = [cid]
+        
         sess = await self.get_session()
-        cids = [cid] if cid else self.admins
+        all_success = True
         for c in cids:
-            for i in range(0, len(str(t)), 4000):
-                chunk = t[i:i+4000]
+            sent_this = False
+            for i in range(0, len(str(text)), 4000):
+                chunk = text[i:i+4000]
                 data = {'chat_id': c, 'text': chunk, 'parse_mode': 'HTML'}
                 if kb and i == 0: data['reply_markup'] = kb
+                
+                print(f"[SENDING] To {c}...", flush=True)
                 for attempt in range(3):
                     try:
-                        async with sess.post(f"{self.base}/sendMessage", proxy=self.proxy, json=data) as r:
-                            if r.status == 200: break
-                            elif r.status in (502, 503, 504): await asyncio.sleep(1.5)
-                            else: break
-                    except: await asyncio.sleep(1)
+                        async with sess.post(f"{self.base}/sendMessage", proxy=self.proxy, json=data, timeout=15) as r:
+                            if r.status == 200:
+                                print(f"[SENT] To {c}", flush=True)
+                                sent_this = True
+                                break
+                            else:
+                                txt = await r.text()
+                                print(f"[SEND FAIL] Status {r.status}: {txt}", flush=True)
+                                if r.status in (502, 503, 504): await asyncio.sleep(1.5)
+                                else: break
+                    except Exception as e:
+                        print(f"[SEND ERROR] Attempt {attempt+1}: {e}", flush=True)
+                        await asyncio.sleep(1)
+                if not sent_this: all_success = False
                 await asyncio.sleep(0.3)
+        return all_success
 
     async def send_action(self, cid, action="typing"):
         sess = await self.get_session()
@@ -78,6 +96,7 @@ class TelegramNotifier:
         import aiohttp as _aiohttp
         sess = await self.get_session()
         cids = [cid] if cid else self.admins
+        success = True
         for c in cids:
             try:
                 data = _aiohttp.FormData()
@@ -88,10 +107,11 @@ class TelegramNotifier:
                 data.add_field('photo', photo, filename='chart.png', content_type='image/png')
                 async with sess.post(f"{self.base}/sendPhoto", proxy=self.proxy, data=data) as r:
                     if r.status != 200:
-                        await self.send(caption, cid=c, kb=kb)  # fallback
+                        success = await self.send(caption, cid=c, kb=kb)  # fallback
             except Exception as e:
                 logger.warning(f"send_photo error: {e}")
-                await self.send(caption, cid=c, kb=kb)
+                success = await self.send(caption, cid=c, kb=kb)
+        return success
 
     async def poll_updates(self, bs):
         off = 0
@@ -113,20 +133,109 @@ class TelegramNotifier:
                     else:
                         await asyncio.sleep(5)
             except Exception as e:
-                print(f"Polling error: {e}")
+                import traceback
+                error_trace = traceback.format_exc()
+                try:
+                    print(f"Polling Fatal Error:\n{error_trace}", flush=True)
+                except: pass
+                logger.error(f"Polling Fatal Error: {error_trace}")
                 await asyncio.sleep(5)
 
     async def handle_update(self, u, bs, cfg_full, sess, off_file):
         """Yagona update qayta ishlash (TDD uchun ajratilgan)"""
-        off = u['update_id']; m = u.get('message', {}); cb = u.get('callback_query', {})
+        off = u['update_id']
+        m = u.get('message', {})
+        cb = u.get('callback_query', {})
         uid = str(cb.get('from', m.get('from', {})).get('id', ''))
+        
+        # Debug Loglar
+        try:
+            print(f"DEBUG: New Update ID {off}", flush=True)
+            if cb: print(f"[CALLBACK] Data: {cb.get('data')} from {uid}", flush=True)
+            if m:  print(f"[MESSAGE] Text: {m.get('text')} from {uid}", flush=True)
+        except: pass
+        
         is_admin = uid in self.admins
         current_state = self.user_states.get(uid)
         sym_list = cfg_full.get('symbols', ["XAU/USD", "BTC/USDT"])
-
+        
         try:
             with open(off_file, 'w') as f: f.write(str(off))
         except: pass
+
+        # Text to Callback Adapter (Sozlamalar menyusi uchun)
+        t = str(m.get('text', ''))
+        if not cb:
+            text_to_cb = {
+                "🪙 Instrumentlar": "sym_list",
+                "⏱ Taymfreym": "tf_menu",
+                "💰 Risk %": "risk_menu",
+                "⚙️ Sifat": "qual_menu",
+                "📊 Statistika (Win-rate)": "stat_winrate",
+                "⚖️ Balans": "set_balance_menu",
+                "📋 Bugungi Signallar": "today_signals",
+                "📈 Oylik P&L": "monthly_pnl",
+                "📜 Signal Tarixi": "signal_history",
+                "🔔 Price Alert": "alert_list",
+                "🌍 Vaqt Zonasi": "tz_menu",
+                "🤖 AI Xulosa: 🟢 YOQ": "toggle_ai_review",
+                "🤖 AI Xulosa: 🔴 O'CH": "toggle_ai_review",
+                
+                # SIFAT
+                "🟢 Sifat: 30%": "setqual_30.0",
+                "🟡 Sifat: 50%": "setqual_50.0",
+                "🟠 Sifat: 75%": "setqual_75.0",
+                "🔴 Sifat: 90%": "setqual_90.0",
+                "🗑 Statistikani tozalash": "clear_stats_confirm",
+                "✔️ Ha, o'chirish": "clear_stats_yes",
+                
+                # RISK
+                "💰 Risk: 0.5%": "risk_0.5",
+                "💰 Risk: 1.0%": "risk_1.0",
+                "💰 Risk: 2.0%": "risk_2.0",
+                "💰 Risk: 3.0%": "risk_3.0",
+                "💰 Risk: 5.0%": "risk_5.0",
+                
+                # TAYMFREYM
+                "⏱ Taymfreym: 5m": "tf_5m",
+                "⏱ Taymfreym: 15m": "tf_15m",
+                "⏱ Taymfreym: 1h": "tf_1h",
+                "⏱ Taymfreym: 4h": "tf_4h",
+                
+                # INSTRUMENTLAR
+                "➕ Qo'shish": "sym_add",
+                "❌ O'chirish": "sym_rem",
+                
+                # SMC TRENER
+                "📚 Mavzuli Darslar": "mentor_lessons",
+                "🌐 Jonli Misollar": "mentor_live_examples",
+                "❓ Erkin Savol-Javob": "mentor_qa",
+                "🚪 Chiqish": "mentor_exit",
+
+                # VAQT ZONASI
+                "🇺🇿 UTC+5 (UZT)": "tz_set:5",
+                "🇹🇷 UTC+3 (MSK)": "tz_set:3",
+                "🇦🇪 UTC+2 (EET)": "tz_set:2",
+                "🇦🇪 UTC+0 (GMT)": "tz_set:0",
+                "🇦🇪 UTC+8 (SGT)": "tz_set:8",
+                
+                # ALERTLAR
+                "➕ Yangi Alert": "alert_add",
+                "🗑 Hammasini O'chir": "alert_clear",
+            }
+            if t in text_to_cb:
+                cb = {'id': 'fake_id', 'data': text_to_cb[t], 'from': {'id': uid}}
+            elif t.startswith("❌ O'chirish: "):
+                sym_name = t.replace("❌ O'chirish: ", "")
+                cb = {'id': 'fake_id', 'data': f"sym_del:{sym_name}", 'from': {'id': uid}}
+            elif t.startswith("🔍 Tahlil: "):
+                parts = t.replace("🔍 Tahlil: ", "").split(" (")
+                sym_name = parts[0]
+                type_ai = parts[1].replace(")", "").lower()
+                cb = {'id': 'fake_id', 'data': f"ai_{type_ai}:{sym_name}", 'from': {'id': uid}}
+            elif t.startswith("🌍 TZ: "):
+                tz = t.replace("🌍 TZ: ", "").split(" (")[0].replace("UTC+", "")
+                cb = {'id': 'fake_id', 'data': f"tz_set:{tz}", 'from': {'id': uid}}
 
         # ── KEYBOARD LAYOUTS ────────────────────────────────────────────────
         ADMIN_KB = {'keyboard': [
@@ -146,9 +255,17 @@ class TelegramNotifier:
 
         KB = json.dumps(ADMIN_KB if is_admin else USER_KB)
 
+        # Asosiy menyuga qaytish
+        if t == "🔙 Asosiy Menyu":
+            await self.send("🔙 Asosiy menyu", cid=uid, kb=KB)
+            return off
+
         # ── CALLBACK QUERIES ─────────────────────────────────────────────────
         if cb:
             d = cb['data']
+            # ⚡️ [CRITICAL] Darhol javob beramiz, shunda tugma loading holatidan chiqadi
+            try: await sess.post(f"{self.base}/answerCallbackQuery", proxy=self.proxy, json={'callback_query_id': cb['id']}, timeout=5)
+            except: pass
 
             # Trener modullari
             if d.startswith("mentor_"):
@@ -202,34 +319,38 @@ class TelegramNotifier:
             elif d == "sym_list":
                 syms = cfg_full.get('symbols', [])
                 text = "🪙 <b>Joriy instrumentlar:</b>\n\n" + "\n".join([f"• <code>{s}</code>" for s in syms])
-                ikb = {'inline_keyboard': [[
-                    {'text': "➕ Qo'shish", 'callback_data': "sym_add"},
-                    {'text': "❌ O'chirish", 'callback_data': "sym_rem"}
-                ]]}
+                ikb = {'keyboard': [
+                    [{'text': "➕ Qo'shish"}, {'text': "❌ O'chirish"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send(text, cid=uid, kb=json.dumps(ikb))
 
             elif d == "sym_add" and is_admin:
                 self.user_states[uid] = "wait_sym_add"
-                await self.send("➕ <b>Yangi instrument qo'shish:</b>\n\nNomini kiriting (masalan: <code>SOL/USDT</code>):", cid=uid)
+                ikb = {'keyboard': [[{'text': "🔙 Asosiy Menyu"}]], 'resize_keyboard': True}
+                await self.send("➕ <b>Yangi instrument qo'shish:</b>\n\nNomini kiriting (masalan: <code>SOL/USDT</code>):", cid=uid, kb=json.dumps(ikb))
 
             elif d == "sym_rem" and is_admin:
                 syms = cfg_full.get('symbols', [])
-                ikb = {'inline_keyboard': [[{'text': f"❌ {s}", 'callback_data': f"sym_del:{s}"}] for s in syms]}
+                # Har bir simvol uchun alohida tugma, matni: "❌ O'chirish: EUR/USD"
+                kb_list = [[{'text': f"❌ O'chirish: {s}"}] for s in syms]
+                kb_list.append([{'text': "🔙 Asosiy Menyu"}])
+                ikb = {'keyboard': kb_list, 'resize_keyboard': True}
                 await self.send("❌ <b>O'chirish uchun tanlang:</b>", cid=uid, kb=json.dumps(ikb))
 
             elif d.startswith("sym_del:") and is_admin:
                 target = d.replace("sym_del:", "")
                 if target in cfg_full.get('symbols', []):
                     cfg_full['symbols'].remove(target)
-                    with self._yaml_lock:
-                        with open('config/settings.yaml', 'w') as f: yaml.dump(cfg_full, f)
+                    with open('config/settings.yaml', 'w') as f: yaml.dump(cfg_full, f)
                     await self.send(f"✅ <code>{target}</code> ro'yxatdan o'chirildi.", cid=uid)
 
             elif d == "tf_menu":
-                ikb = {'inline_keyboard': [
-                    [{'text': "5m",  'callback_data': "tf_5m"},  {'text': "15m", 'callback_data': "tf_15m"}],
-                    [{'text': "1h",  'callback_data': "tf_1h"},  {'text': "4h",  'callback_data': "tf_4h"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "⏱ Taymfreym: 5m"},  {'text': "⏱ Taymfreym: 15m"}],
+                    [{'text': "⏱ Taymfreym: 1h"},  {'text': "⏱ Taymfreym: 4h"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send("⏱ <b>Ishchi taymfreymni tanlang:</b>", cid=uid, kb=json.dumps(ikb))
 
             elif d.startswith("tf_") and d != "tf_menu" and is_admin:
@@ -239,11 +360,12 @@ class TelegramNotifier:
                 await self.send(f"✅ Ishchi taymfreym <b>{new_tf}</b> ga o'zgartirildi.", cid=uid)
 
             elif d == "risk_menu":
-                ikb = {'inline_keyboard': [
-                    [{'text': "0.5%", 'callback_data': "risk_0.5"}, {'text': "1.0%", 'callback_data': "risk_1.0"}],
-                    [{'text': "2.0%", 'callback_data': "risk_2.0"}, {'text': "3.0%", 'callback_data': "risk_3.0"}],
-                    [{'text': "5.0%", 'callback_data': "risk_5.0"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "💰 Risk: 0.5%"}, {'text': "💰 Risk: 1.0%"}],
+                    [{'text': "💰 Risk: 2.0%"}, {'text': "💰 Risk: 3.0%"}],
+                    [{'text': "💰 Risk: 5.0%"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send("💰 <b>Har bir bitim uchun riskni tanlang:</b>", cid=uid, kb=json.dumps(ikb))
 
             elif d.startswith("risk_") and d != "risk_menu" and is_admin:
@@ -257,11 +379,12 @@ class TelegramNotifier:
 
             elif d == "qual_menu":
                 curr_q = cfg_full.get('smc', {}).get('min_quality', 75.0)
-                ikb = {'inline_keyboard': [
-                    [{'text': "🟢 30%", 'callback_data': "setqual_30.0"}, {'text': "🟡 50%", 'callback_data': "setqual_50.0"}],
-                    [{'text': "🟠 75%", 'callback_data': "setqual_75.0"}, {'text': "🔴 90%", 'callback_data': "setqual_90.0"}],
-                    [{'text': "🗑 Statistikani tozalash", 'callback_data': "clear_stats_confirm"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "🟢 Sifat: 30%"}, {'text': "🟡 Sifat: 50%"}],
+                    [{'text': "🟠 Sifat: 75%"}, {'text': "🔴 Sifat: 90%"}],
+                    [{'text': "🗑 Statistikani tozalash"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send(f"⚙️ <b>Sifat Sozlamasi</b>\n\nJoriy: {curr_q}%", cid=uid, kb=json.dumps(ikb))
 
             elif d.startswith("setqual_") and is_admin:
@@ -359,10 +482,10 @@ class TelegramNotifier:
                     for i, (sym, price, direction) in enumerate(alerts):
                         lines.append(f"{i+1}. <b>{sym}</b> {direction} <code>{price}</code>")
                     msg = "\n".join(lines)
-                ikb = {'inline_keyboard': [
-                    [{'text': "➕ Yangi Alert", 'callback_data': "alert_add"}],
-                    [{'text': "🗑 Hammasini O'chir", 'callback_data': "alert_clear"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "➕ Yangi Alert"}, {'text': "🗑 Hammasini O'chir"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send(msg, cid=uid, kb=json.dumps(ikb))
 
             elif d == "alert_add":
@@ -378,13 +501,12 @@ class TelegramNotifier:
 
             # Sprint 3: Vaqt zonasi
             elif d == "tz_menu":
-                ikb = {'inline_keyboard': [
-                    [{'text': "🇺🇿 UTC+5 (UZT)",  'callback_data': "tz_set:5"},
-                     {'text': "🇹🇷 UTC+3 (MSK)",  'callback_data': "tz_set:3"}],
-                    [{'text': "🇦🇪 UTC+2 (EET)",  'callback_data': "tz_set:2"},
-                     {'text': "🇦🇪 UTC+0 (GMT)",  'callback_data': "tz_set:0"}],
-                    [{'text': "🇦🇪 UTC+8 (SGT)",  'callback_data': "tz_set:8"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "🇺🇿 UTC+5 (UZT)"}, {'text': "🇹🇷 UTC+3 (MSK)"}],
+                    [{'text': "🇦🇪 UTC+2 (EET)"}, {'text': "🇦🇪 UTC+0 (GMT)"}],
+                    [{'text': "🇦🇪 UTC+8 (SGT)"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 curr_tz = bs.get('settings', {}).get('tz_offset', 5)
                 await self.send(f"🌍 <b>Vaqt Zonasi (joriy: UTC+{curr_tz}):</b>", cid=uid, kb=json.dumps(ikb))
 
@@ -398,7 +520,7 @@ class TelegramNotifier:
 
             elif d == "stat_winrate":
                 st = self.db.get_stats(limit=100)
-                ikb = {'inline_keyboard': [[{'text': "🗑 Statistikani tozalash", 'callback_data': "clear_stats_confirm"}]]}
+                ikb = {'keyboard': [[{'text': "🗑 Statistikani tozalash"}], [{'text': "🔙 Asosiy Menyu"}]], 'resize_keyboard': True}
                 if st['total'] == 0:
                     msg = (f"📊 <b>Statistika (Faqat Signallar):</b>\n\n"
                            f"📈 Jami yuborilgan signallar: <b>{st.get('total_signals', 0)} ta</b>\n"
@@ -596,30 +718,23 @@ class TelegramNotifier:
             if "Sozlamalar" in t and is_admin:
                 ai_enabled = bs.get('settings', {}).get('ai_review_enabled', True)
                 ai_btn = "🤖 AI Xulosa: 🟢 YOQ" if ai_enabled else "🤖 AI Xulosa: 🔴 O'CH"
-                ikb = {'inline_keyboard': [
-                    [{'text': "🪙 Instrumentlar", 'callback_data': "sym_list"},
-                     {'text': "⏱ Taymfreym",     'callback_data': "tf_menu"}],
-                    [{'text': "💰 Risk %",         'callback_data': "risk_menu"},
-                     {'text': "⚙️ Sifat",          'callback_data': "qual_menu"}],
-                    [{'text': "📊 Statistika (Win-rate)", 'callback_data': "stat_winrate"},
-                     {'text': "⚖️ Balans",        'callback_data': "set_balance_menu"}],
-                    [{'text': "📋 Bugungi Signallar", 'callback_data': "today_signals"},
-                     {'text': "📈 Oylik P&L",       'callback_data': "monthly_pnl"}],
-                    [{'text': "📜 Signal Tarixi",   'callback_data': "signal_history"},
-                     {'text': "🔔 Price Alert",    'callback_data': "alert_list"}],
-                    [{'text': "🌍 Vaqt Zonasi",     'callback_data': "tz_menu"},
-                     {'text': ai_btn,               'callback_data': "toggle_ai_review"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "🪙 Instrumentlar"}, {'text': "⏱ Taymfreym"}],
+                    [{'text': "💰 Risk %"},         {'text': "⚙️ Sifat"}],
+                    [{'text': "📊 Statistika (Win-rate)"}, {'text': "⚖️ Balans"}],
+                    [{'text': "📋 Bugungi Signallar"}, {'text': "📈 Oylik P&L"}],
+                    [{'text': "📜 Signal Tarixi"},   {'text': "🔔 Price Alert"}],
+                    [{'text': "🌍 Vaqt Zonasi"},     {'text': ai_btn}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
                 await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
 
             elif "Jonli SMC Trener" in t:
                 self.user_states[uid] = "choosing_module"
-                ikb = {'inline_keyboard': [
-                    [{'text': "📚 Mavzuli Darslar",    'callback_data': "mentor_lessons"}],
-                    [{'text': "🌐 Jonli Misollar",      'callback_data': "mentor_live_examples"}],
-                    [{'text': "❓ Erkin Savol-Javob",   'callback_data': "mentor_qa"}],
-                    [{'text': "🚪 Chiqish",             'callback_data': "mentor_exit"}]
-                ]}
+                ikb = {'keyboard': [
+                    [{'text': "📚 Mavzuli Darslar"}, {'text': "🌐 Jonli Misollar"}],
+                    [{'text': "❓ Erkin Savol-Javob"}, {'text': "🚪 Chiqish"}]
+                ], 'resize_keyboard': True}
                 await self.send("👨‍🏫 <b>Jonli SMC Trener</b> rejimi:\n\nQaysi modulni tanlaysiz?", cid=uid, kb=json.dumps(ikb))
 
             elif any(x in t for x in ["Texnik Tahlil", "Fundamental", "Scalping"]):
@@ -627,7 +742,16 @@ class TelegramNotifier:
                     await self.send("❌ Scalping AI faqat adminlar uchun.", cid=uid)
                     return off
                 type_ai = 'fundamental' if 'Fund' in t else ('scalping' if 'Scalp' in t else 'technical')
-                ikb = {'inline_keyboard': [[{'text': s, 'callback_data': f"ai_{type_ai}:{s}"}] for s in sym_list]}
+                
+                # Fundamental uchun chat sessiyasini ochamiz (fayl yuklash uchun)
+                if type_ai == 'fundamental':
+                    self.user_states[uid] = "in_session"
+                    self.user_modules[uid] = "fundamental"
+                    await self.send("🌐 <b>Fundamental Tahlil</b> faollashdi.\n\nSavolingizni yozing yoki fayl/rasm yuklang:", cid=uid)
+                    return off
+
+                ikb = {'keyboard': [[{'text': f"🔍 Tahlil: {s} ({type_ai.upper()})"} ] for s in sym_list], 'resize_keyboard': True}
+                ikb['keyboard'].append([{'text': "🔙 Asosiy Menyu"}])
                 await self.send(f"🔍 <b>{type_ai.upper()}</b> uchun instrumentni tanlang:", cid=uid, kb=json.dumps(ikb))
 
             elif any(x in t for x in ["Chat Assistant", "AI Chat"]):

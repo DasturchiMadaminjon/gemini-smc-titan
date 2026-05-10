@@ -48,14 +48,20 @@ Loyiha barqarorligini ta'minlash uchun quyidagi 4 ta qoida qat'iy amal qilinishi
   - Faqat foydalanuvchi interfeysi, klaviaturalar va API bilan ishlash.
   - `send()` funksiyasi `502, 503, 504` xatoliklarda retry (qayta urinish) mantiqiga ega.
   - Doimo yangi xabar `await self.send()` orqali jo'natiladi.
+  - **JSON Safety Rule:** API orqali jo'natilayotgan barcha `reply_markup` lar (Inline va Reply klaviaturalar) qat'iyan `json.loads` qilinib, "Object" ko'rinishida yuboriladi (String qilinganda Telegram API "jim" inkor qilmasligi uchun).
 
 - **`core/indicator.py` (SMC Matematikasi):**
-  - Bozor strukturasi (FVG, OB, BOS) tahlili. Tashqi dunyo haqida hech narsa bilmaydi.
+  - Bozor strukturasi (FVG, OB, BOS) tahlili.
+  - **Dinamik Sifat (Dynamic Quality):** `min_quality` ga asosan ballarni (score) hisoblaydi. Agar sifat < 50% bo'lsa, "Sweep" rejimi faollashadi.
 
 - **`utils/database.py` (Xotira):**
   - Signallar, natijalar (TP/SL) va foydalanuvchi statistikasi.
   - **Deploy tayyorligi:** Kritik ustunlarda (timestamp, symbol, sig_hash) SQLite INDEX lar mavjud.
 
+- **`core/manager.py` (Trade Manager):**
+  - Signallarni formatlash, risk menejment (streak protection) va xabarlarni yuborish.
+  - `process_and_send_signal` orqali `TelegramNotifier` ga xabar uzatiladi.
+  - **Deduplication:** Hash-id orqali 30 daqiqa ichida bir xil signalni takror yubormaslik.
 - **`watchdog.py` (Qo'riqchi):**
   - Bot crash bo'lsa yoki muzlab qolsa, restart qiladi va Telegramga ogohlantirish yuboradi.
   - Soatlik restart limiti (MAX_RESTARTS=10) bilan himoyalangan.
@@ -87,6 +93,48 @@ Bot o'z ichiga quyidagi tahlil vositalarini oladi:
 - **`watchdog.py` (Heartbeat):** `data/heartbeat.txt` orqali botning tirikligini sekundiga tekshiruvchi avtonom monitoring.
 - **`panic_request`:** Favqulodda vaziyatda barcha operatsiyalarni to'xtatuvchi xavfsizlik tugmasi.
 - **SQLite Indexes:** Ma'lumotlar bazasining tezkorligi va katta ma'lumotlar (history) bilan ishlashga tayyorligi.
+
+## 🧬 5. GENETIC EVOLUTION ENGINE (GEE) - O'Z-O'ZINI O'STIRISH
+
+Titan V27.2 boti endi oddiy algoritm emas, balki **"O'z-o'zini o'stiruvchi genetik kod"** tamoyili asosida ishlaydi:
+
+1.  **Historical Adaptation (Xotira asosida moslashuv):** 
+    - Bot `database.py` dagi signallarning muvaffaqiyatini (`Win/Loss`) kuzatadi.
+    - Har 7 kunda "Genetik Audit" o'tkaziladi.
+2.  **Parameter Mutation (Parametrlar mutatsiyasi):**
+    - Agar Win-rate 60% dan pasaysa, bot `core/indicator.py` dagi SMC parametrlarini (FVG chuqurligi, OB zonalari) `Genetic Engine` orqali +/- 5% ga o'zgartiradi (Mutatsiya).
+3.  **Fittest Settings Selection:**
+    - Eng yaxshi natija bergan parametrlar yangi "Dominant Gen" sifatida `config/settings.json` ga yoziladi.
+4.  **Self-Optimization:** 
+    - Bot o'zining `min_quality` filtrini bozorning joriy volatilligiga qarab avtomatik moslashtiradi.
+
+---
+
+## 🔄 Fayllar Bog'liqlik Xaritasi (Maintenance Map)
+
+Har qanday faylni o'zgartirganda, quyidagi bog'liqliklarni tekshirish shart:
+
+| Yangilangan Fayl | Birga tekshirilishi kerak | Sababi |
+| :--- | :--- | :--- |
+| `core/indicator.py` | `tests/test_signal_flow_tdd.py` | Matematik mantiq va signal generation testi. |
+| `utils/ai_engine.py` | `tests/test_ai_buttons_logic.py` | AI persona va SDK tahlil qoidalari. |
+| `utils/telegram.py` | `tests/test_all_buttons_tdd.py` | UI/UX tugmalar va menyu strukturasi. |
+| `utils/exchange.py` | `tests/test_async_integrity.py` | Asinxronlik (Async/Await) va API ulanishlar. |
+| `bot.py` | `watchdog.py` | Asosiy tsikl va Heartbeat (yurak urishi). |
+| `requirements.txt` | `setup.sh` | Kutubxonalar va virtual muhit barqarorligi. |
+
+## ⚡️ Asinxronlik Qoidalari (Async Engine Rules)
+
+Loyiha to'liq `asyncio` ga o'tkazildi. Bloklanishlarning (freezing) oldini olish uchun:
+1. **Blocking funksiyalar taqiqlanadi:** `requests`, `time.sleep`, `os.system` kabi sinxron chaqiriqlar o'rniga `aiohttp`, `asyncio.sleep` va `run_in_executor` ishlatilishi shart.
+2. **AI Engine Threading:** Google Gemini (yoki boshqa AI SDK lar) qancha kutishidan qat'iy nazar, ular faqat va faqat `await asyncio.to_thread(chat.send_message)` orqali alohida jarayonda chaqirilishi shart. Event loop band qilinmaydi!
+3. **Heartbeat monitoring:** `bot.py` har bir skanerlash tsikli oxirida `data/heartbeat.txt` faylini yangilaydi. `watchdog.py` buni kuzatib boradi.
+4. **TDD Integrity:** Har bir yangi API integratsiyasi `tests/test_async_integrity.py` orqali tekshirilishi shart.
+
+## 🛡 TDD va Himoya Qatlamlari
+1. **Unit Tests:** Funksiyalar mantig'i.
+2. **Integration Tests:** Modullararo aloqa (Mock-siz).
+3. **Async Integrity:** Event loop bloklanmasligi kafolati.
 
 ---
 

@@ -27,7 +27,7 @@ def _load_telegram_cfg():
     try:
         with open('config/settings.yaml', 'r') as f:
             cfg = yaml.safe_load(f)
-        token   = cfg['telegram']['bot_token']
+        token   = os.getenv('TELEGRAM_BOT_TOKEN') or cfg['telegram']['bot_token']
         chat_id = cfg['telegram']['chat_id'][0]
         return token, str(chat_id)
     except Exception:
@@ -65,6 +65,10 @@ def get_last_heartbeat():
 
 def start_bot():
     logger.info(f"Bot jarayoni boshlanmoqda: {BOT_SCRIPT}")
+    # Grace period: Heartbeat faylini yangilab qo'yamiz, bot o'ziga kelishi uchun
+    try:
+        with open(HEARTBEAT_FILE, 'w') as f: f.write(str(time.time()))
+    except: pass
     return subprocess.Popen([sys.executable, BOT_SCRIPT])
 
 

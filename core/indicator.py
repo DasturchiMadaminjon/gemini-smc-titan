@@ -105,20 +105,25 @@ class GeminiIndicator:
         if retracement <= 0.382: return 'premium'
         return 'equilibrium'
 
-    def _find_unmitigated_fvg(self, df: pd.DataFrame) -> Optional[Tuple[float, float, str]]:
-        """Yopilmagan FVG (Fair Value Gap) topish."""
+    def _find_unmitigated_fvg(self, df: pd.DataFrame) -> Dict[str, Optional[Tuple[float, float]]]:
+        """Yopilmagan FVG (Fair Value Gap) topish (Bullish va Bearish alohida)."""
+        res = {'bullish': None, 'bearish': None}
         for i in range(len(df)-1, 2, -1):
             # Bullish FVG
-            if df['high'].iat[i-2] < df['low'].iat[i]:
+            if res['bullish'] is None and df['high'].iat[i-2] < df['low'].iat[i]:
                 gap = (df['high'].iat[i-2], df['low'].iat[i])
-                if df['low'].iloc[i+1:].min() > gap[1]: # Hali yopilmagan
-                    return (gap[0], gap[1], 'bullish')
+                future_lows = df['low'].iloc[i+1:]
+                if len(future_lows) == 0 or future_lows.min() > gap[1]: # Hali yopilmagan
+                    res['bullish'] = gap
             # Bearish FVG
-            if df['low'].iat[i-2] > df['high'].iat[i]:
+            if res['bearish'] is None and df['low'].iat[i-2] > df['high'].iat[i]:
                 gap = (df['high'].iat[i], df['low'].iat[i-2])
-                if df['high'].iloc[i+1:].max() < gap[0]: # Hali yopilmagan
-                    return (gap[0], gap[1], 'bearish')
-        return None
+                future_highs = df['high'].iloc[i+1:]
+                if len(future_highs) == 0 or future_highs.max() < gap[0]: # Hali yopilmagan
+                    res['bearish'] = gap
+            if res['bullish'] and res['bearish']:
+                break
+        return res
 
     # ------------------------------------------------------------------
     # 5. ATR DYNAMIC STOP-LOSS
@@ -150,36 +155,68 @@ class GeminiIndicator:
         curr_price = df['close'].iloc[-1]
         
         # 4. Swing High/Low for Fibo & SL
-        recent_high = df['high'].rolling(30).max().iloc[-1]
-        recent_low = df['low'].rolling(30).min().iloc[-1]
+        recent_high = df['high'].rolling(100).max().iloc[-1]
+        recent_low = df['low'].rolling(100).min().iloc[-1]
         zone = self._get_fibo_zone(recent_low, recent_high, curr_price)
         
         # 5. FVG/OB Confluence
-        fvg = self._find_unmitigated_fvg(df.tail(20))
+        fvgs = self._find_unmitigated_fvg(df.tail(100))
+
+        # --- DINAMIK SIFAT HISOBINI BOSHLASH ---
+        # settings.yaml dan min_quality ni olamiz
+        target_min_q = self.smc.get('min_quality', 70.0)
         
+        def calculate_quality(direction: str, current_zone: str, trend: str, has_fvg: bool, risk_reward: float) -> float:
+            score = 30.0 # Boshlang'ich ball (Struktura mavjudligi uchun)
+            
+            # Zona mosligi
+            if (direction == 'buy' and current_zone == 'discount') or (direction == 'sell' and current_zone == 'premium'):
+                score += 20.0
+            
+            # Trend mosligi
+            if (direction == 'buy' and trend != 'bearish') or (direction == 'sell' and trend != 'bullish'):
+                score += 20.0
+                
+            # FVG mavjudligi
+            if has_fvg:
+                score += 20.0
+                
+            # R:R sifati
+            if risk_reward >= 2.5: score += 10.0
+            elif risk_reward >= 1.5: score += 5.0
+            
+            return min(score, 100.0)
+
         # --- BUY SIGNAL LOGIC ---
-        if htf_trend != 'bearish' and struct['bos_up'] and not struct['sweep_up']:
-            if zone == 'discount' and fvg and fvg[2] == 'bullish':
-                sl = recent_low - (atr * 0.5)
-                risk = curr_price - sl
-                if risk > 0 and (recent_high - curr_price) / risk >= self.min_rr:
+        if struct['bos_up'] or (target_min_q <= 50 and struct['sweep_up']):
+            sl = recent_low - (atr * 0.5)
+            risk = curr_price - sl
+            if risk > 0:
+                rr = (recent_high - curr_price) / risk
+                q = calculate_quality('buy', zone, htf_trend, fvgs['bullish'] is not None, rr)
+                
+                # Agar sifat yetarli bo'lsa yoki bozor juda aniq bo'lsa
+                if q >= target_min_q:
                     return Signal(
                         direction='buy', symbol=symbol, entry=curr_price,
                         sl=sl, tp1=curr_price + risk * 1.5, tp2=curr_price + risk * 2.5, tp3=curr_price + risk * 4.0,
-                        quality=85.0, reason="HTF Trend + BOS + Discount Zone + FVG Tap",
+                        quality=q, reason=f"SMC Setup (Q:{q}%)",
                         timestamp=pd.Timestamp.now()
                     )
 
         # --- SELL SIGNAL LOGIC ---
-        if htf_trend != 'bullish' and struct['bos_down'] and not struct['sweep_down']:
-            if zone == 'premium' and fvg and fvg[2] == 'bearish':
-                sl = recent_high + (atr * 0.5)
-                risk = sl - curr_price
-                if risk > 0 and (curr_price - recent_low) / risk >= self.min_rr:
+        if struct['bos_down'] or (target_min_q <= 50 and struct['sweep_down']):
+            sl = recent_high + (atr * 0.5)
+            risk = sl - curr_price
+            if risk > 0:
+                rr = (curr_price - recent_low) / risk
+                q = calculate_quality('sell', zone, htf_trend, fvgs['bearish'] is not None, rr)
+                
+                if q >= target_min_q:
                     return Signal(
                         direction='sell', symbol=symbol, entry=curr_price,
                         sl=sl, tp1=curr_price - risk * 1.5, tp2=curr_price - risk * 2.5, tp3=curr_price - risk * 4.0,
-                        quality=85.0, reason="HTF Trend + BOS + Premium Zone + FVG Tap",
+                        quality=q, reason=f"SMC Setup (Q:{q}%)",
                         timestamp=pd.Timestamp.now()
                     )
 

@@ -32,11 +32,13 @@ def send_signal_sms(symbol, side, price, tp, sl):
     # Masalan: GOLD BUY @2328. SL:2320. TP:2350
     text = f"🚀 {symbol} {side.upper()} @{price}\nSL: {sl}\nTP: {tp}"
 
+    recipient = os.getenv("SMS_RECIPIENT", "+998901234567")
+    
     payload = {
         "messages": [
             {
                 "from": sender,
-                "destinations": [{"to": "+998915054701"}], # Sizning tasdiqlangan raqamingiz
+                "destinations": [{"to": recipient}],
                 "text": text
             }
         ]
