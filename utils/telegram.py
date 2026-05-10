@@ -305,15 +305,26 @@ class TelegramNotifier:
                     cid=uid
                 )
 
-            # AI tahlil so'rovi
-            elif d.startswith("ai_"):
-                if "scalping" in d and not is_admin:
-                    await sess.post(f"{self.base}/answerCallbackQuery", json={
-                        'callback_query_id': cb['id'], 'text': "❌ Scalping faqat adminlar uchun.", 'show_alert': True})
-                    return off
-                t_type, sym = d.replace("ai_", "").split(":")
-                with self.lock: bs['ai_requests'].append({'type': t_type, 'symbol': sym, 'chat_id': uid})
-                await self.send(f"⏳ <i>{sym} uchun {t_type.upper()} tahlili tayyorlanmoqda...</i>", cid=uid)
+            # AI tahlil so'rovi (Inline tugmalar uchun)
+            elif d.startswith("ai_") or d.startswith("analyze:"):
+                prefix = "ai_" if d.startswith("ai_") else "analyze:"
+                try:
+                    data_parts = d.replace(prefix, "").split(":")
+                    t_type = data_parts[0]
+                    sym = data_parts[1] if len(data_parts) > 1 else "BTC/USDT"
+                    
+                    if t_type == "scalping" and not is_admin:
+                        await sess.post(f"{self.base}/answerCallbackQuery", json={
+                            'callback_query_id': cb['id'], 'text': "❌ Scalping faqat adminlar uchun.", 'show_alert': True})
+                        return off
+                        
+                    with self.lock: bs['ai_requests'].append({
+                        'type': t_type, 'symbol': sym, 
+                        'chat_id': uid, 'text': f"{sym} uchun {t_type.upper()} tahlil ber.", 'image': None
+                    })
+                    await self.send(f"⏳ <i>{sym} uchun {t_type.upper()} tahlili tayyorlanmoqda...</i>", cid=uid)
+                except Exception as e:
+                    logger.error(f"AI Callback error: {e}")
 
             # ── SOZLAMALAR INLINE ──
             elif d == "sym_list":
