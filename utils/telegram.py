@@ -838,6 +838,24 @@ class TelegramNotifier:
                 )
                 await self.send(guide, cid=uid)
 
+            elif "🔍 Tahlil:" in t:
+                # Format: "🔍 Tahlil: ETH/USDT (TECHNICAL)"
+                try:
+                    parts = t.split(":")
+                    if len(parts) > 1:
+                        sub_parts = parts[1].strip().split("(")
+                        sym = sub_parts[0].strip()
+                        analysis_type = sub_parts[1].replace(")", "").lower().strip() if len(sub_parts) > 1 else "technical"
+                        
+                        with self.lock: bs['ai_requests'].append({
+                            'type': analysis_type, 'symbol': sym,
+                            'chat_id': uid, 'text': f"{sym} uchun {analysis_type.upper()} tahlil ber.", 'image': None
+                        })
+                        await self.send(f"⏳ <b>{sym}</b> uchun {analysis_type.upper()} tahlili tayyorlanmoqda...", cid=uid)
+                        return off
+                except Exception as e:
+                    logger.error(f"Tahlil tugmasi xatosi: {e}")
+
             elif not t.startswith('/') or m.get('photo'):
                 img_data = None
                 if m.get('photo'):

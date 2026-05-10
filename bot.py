@@ -138,12 +138,15 @@ class GeminiBot:
         # Avtomatik Chart generatsiyasi — Technical va Scalping uchun AI ko'zi
         if not img and t in ['technical', 'scalping']:
             try:
-                loop = asyncio.get_event_loop()
-                df = await loop.run_in_executor(None, self.exchange.fetch_ohlcv, s, self.cfg.get('timeframe', '15m'), 100)
+                # SPREAD: fetch_ohlcv asinxron, uni to'g'ridan-to'g'ri await qilish kerak
+                df = await self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '15m'), limit=100)
                 if df is not None and not df.empty:
                     img = await generate_chart_buffer(df)
+                    # AI tahlili uchun narxlarni ham matn ko'rinishida qo'shamiz
+                    ohlc_text = df.tail(10).to_string()
+                    req['text'] = f"{req.get('text', '')}\n\nOHLC DATA (Last 10 candles):\n{ohlc_text}"
             except Exception as e:
-                print(f"DEBUG: Avto-chart xatosi: {e}")
+                logger.error(f"DEBUG: Avto-chart xatosi: {e}")
 
         await self.telegram.send_action(uid, "upload_photo" if img else "typing")
 
