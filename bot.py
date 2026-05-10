@@ -190,8 +190,8 @@ class GeminiBot:
 
         prompts = {
             'analytics':   f"{prompt_text if t=='analytics' else ''}",
-            'technical':   f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida to'liq texnik tahlil ber.",
-            'scalping':    f"Instrument: {s} | Joriy narx: {p}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
+            'technical':   f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida TO'LIQ texnik tahlil ber. Grafikdagi zonalarni va OHLC ma'lumotlarini izohla.",
+            'scalping':    f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
             'fundamental': f"Instrument: {s} | Joriy narx: {p}{news_context}\n{web_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozir 2026-yil, senga berilgan ma'lumotlar real vaqtdagi ma'lumotlardir.",
             'chat':        (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
             'mentor_lessons':       (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}",

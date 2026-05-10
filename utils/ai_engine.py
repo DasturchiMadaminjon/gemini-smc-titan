@@ -73,7 +73,7 @@ class AIEngine:
         contents = [prompt]
         if image_bytes:
             contents.append(
-                types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+                types.Part.from_bytes(data=image_bytes, mime_type="image/png")
             )
 
         # Barcha API kalitlarni aylanish
