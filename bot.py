@@ -206,6 +206,9 @@ class GeminiBot:
         
         for attempt in range(max_retries):
             try:
+                # Debug log: Bog'liqlikni tekshirish uchun
+                logger.info(f"[AI-DEBUG] Request for {s}: context={t}, image_present={img is not None}, data_len={len(req.get('text',''))}")
+                
                 res = await self.telegram.get_ai_analysis(prompt, uid, context=t, image_data=img)
                 
                 # Agar AI javobi xato haqida bo'lsa (leaked key kabi), qayta urinib o'tirmaymiz

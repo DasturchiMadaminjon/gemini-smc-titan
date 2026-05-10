@@ -61,6 +61,9 @@ class AIEngine:
     async def get_analysis(
         self, prompt: str, context_type: str = "technical", image_bytes: bytes = None
     ) -> str:
+        # Debug log: AI Engine rasm qabul qildimi?
+        logger.info(f"[ENGINE-DEBUG] context={context_type}, img_bytes_received={image_bytes is not None}")
+        
         if not self.client:
             return "❌ API kalitlari yo'q."
 
