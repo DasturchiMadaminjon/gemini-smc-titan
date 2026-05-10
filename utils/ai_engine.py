@@ -72,8 +72,10 @@ class AIEngine:
         full_instruction = f"{persona}\n\nKontekst: {rag_text}"
         contents = [prompt]
         if image_bytes:
+            # Rasm turini aniqlash (PNG: \x89PNG, JPEG: \xff\xd8)
+            mime = "image/png" if image_bytes.startswith(b'\x89PNG') else "image/jpeg"
             contents.append(
-                types.Part.from_bytes(data=image_bytes, mime_type="image/png")
+                types.Part.from_bytes(data=image_bytes, mime_type=mime)
             )
 
         # Barcha API kalitlarni aylanish
