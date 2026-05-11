@@ -133,6 +133,20 @@ class GeminiBot:
     async def _handle_ai(self, req):
         uid = req['chat_id']; s = req['symbol']; t = req['type']
         p = self.bot_state['symbols'].get(s, {}).get('price', 0)
+        
+        # Narx 0 yoki yo'q bo'lsa — real vaqtda yfinance orqali olish (fundamental, chat uchun)
+        if p == 0 and s not in ('SMC', 'ALL', 'DXY', 'NASDAQ', 'S&P500'):
+            try:
+                from utils.price_fetcher import get_current_price
+                import asyncio as _asyncio
+                price_str = await _asyncio.get_event_loop().run_in_executor(None, get_current_price, s)
+                # "Hozirgi vaqtda XAU/USD narxi: 2340.50 USD." dan raqamni ajratib olamiz
+                import re as _re
+                nums = _re.findall(r'[\d,]+\.?\d*', price_str.replace(',', ''))
+                if nums:
+                    p = float(nums[0])
+            except Exception as _pe:
+                logger.warning(f"Price fetch fallback error ({s}): {_pe}")
         img = req.get('image')
         
         # Avtomatik Chart generatsiyasi — Technical va Scalping uchun AI ko'zi

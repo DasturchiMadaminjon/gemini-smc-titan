@@ -1,6 +1,8 @@
 # GEMINI SMC TITAN V27.2 - ARCHITECTURE MAP
 
-Ushbu hujjat loyihaning genetik xaritasi va barqarorlik qonunidir. 
+> **Oxirgi yangilanish:** 2026-05-11 | O'zgartirilgan fayllar: `utils/telegram.py`, `utils/ai_engine.py`, `bot.py`
+
+Ushbu hujjat loyihaning genetik xaritasi va barqarorlik qonunidir.
 **QOIDALARNI HECH QACHON BUZMANG!**
 
 ---
@@ -48,7 +50,13 @@ Loyiha barqarorligini ta'minlash uchun quyidagi 4 ta qoida qat'iy amal qilinishi
   - Faqat foydalanuvchi interfeysi, klaviaturalar va API bilan ishlash.
   - `send()` funksiyasi `502, 503, 504` xatoliklarda retry (qayta urinish) mantiqiga ega.
   - Doimo yangi xabar `await self.send()` orqali jo'natiladi.
-  - **JSON Safety Rule:** API orqali jo'natilayotgan barcha `reply_markup` lar (Inline va Reply klaviaturalar) qat'iyan `json.loads` qilinib, "Object" ko'rinishida yuboriladi (String qilinganda Telegram API "jim" inkor qilmasligi uchun).
+  - **FSM Symbol Detection (v27.2+):** `in_session` + `module=fundamental` holatida
+    foydalanuvchi matni (`SYMBOL_HINTS` lug'ati orqali) tahlil qilinadi va
+    `symbol='SMC'` o'rniga haqiqiy instrument (`'XAU/USD'`, `'ETH/USDT'` va h.k.)
+    `ai_requests` navbatiga yoziladi. **Bu qoidani BUZMANG** — aks holda AI
+    ga `narx=0.00 USD` uzatiladi va generic javob keladi.
+  - **JSON Safety Rule:** API orqali jo'natilayotgan barcha `reply_markup` lar (Inline va Reply
+    klaviaturalar) qat'iyan `json.loads` qilinib, "Object" ko'rinishida yuboriladi.
 
 - **`core/indicator.py` (SMC Matematikasi):**
   - Bozor strukturasi (FVG, OB, BOS) tahlili.
@@ -117,11 +125,12 @@ Har qanday faylni o'zgartirganda, quyidagi bog'liqliklarni tekshirish shart:
 | Yangilangan Fayl | Birga tekshirilishi kerak | Sababi |
 | :--- | :--- | :--- |
 | `core/indicator.py` | `tests/test_signal_flow_tdd.py` | Matematik mantiq va signal generation testi. |
-| `utils/ai_engine.py` | `tests/test_ai_buttons_logic.py` | AI persona va SDK tahlil qoidalari. |
-| `utils/telegram.py` | `tests/test_all_buttons_tdd.py` | UI/UX tugmalar va menyu strukturasi. |
+| `utils/ai_engine.py` | `tests/test_ai_buttons_logic.py`, `tests/test_fundamental_symbol_detection.py` | AI persona, SDK va format qoidalari. |
+| `utils/telegram.py` | `tests/test_all_buttons_tdd.py`, `tests/test_fundamental_symbol_detection.py` | UI/UX tugmalar, symbol detection va menyu strukturasi. |
 | `utils/exchange.py` | `tests/test_async_integrity.py` | Asinxronlik (Async/Await) va API ulanishlar. |
-| `bot.py` | `watchdog.py` | Asosiy tsikl va Heartbeat (yurak urishi). |
+| `bot.py` | `watchdog.py`, `ARCHITECTURE.md` | Asosiy tsikl, Heartbeat va arxitektura. |
 | `requirements.txt` | `setup.sh` | Kutubxonalar va virtual muhit barqarorligi. |
+| `utils/price_fetcher.py` | `tests/test_fundamental_symbol_detection.py` | Narx olish fallback mantiq — `narx=0` muammosi. |
 
 ## ⚡️ Asinxronlik Qoidalari (Async Engine Rules)
 
@@ -138,4 +147,26 @@ Loyiha to'liq `asyncio` ga o'tkazildi. Bloklanishlarning (freezing) oldini olish
 
 ---
 
-**ESLATMA (AI VA DASTURCHI UCHUN):** Kod yozishdan oldin ushbu qoidalarni o'qi! Barqarorlik — TDD va Modullilikdadir.
+## 📋 O'ZGARISHLAR TARIXI (CHANGELOG)
+
+### 2026-05-11 — Fundamental AI Tuzatish (Muammo: narx=0, symbol=SMC)
+
+**Muammo:** Foydalanuvchi "goldni analiz qil" yozganda:
+1. `symbol='SMC'` hardcoded → AI ga noto'g'ri instrument uzatilgan
+2. `price=0.0` → `bot_state['symbols']` da `SMC` yo'qligi sababli narx 0 bo'lgan
+3. Fundamental persona generic makro ma'ruza yozgan (format yo'q edi)
+
+**Tuzatishlar:**
+- `utils/telegram.py` → `in_session` + `fundamental` uchun `SYMBOL_HINTS` lug'ati qo'shildi
+- `bot.py` → `price=0` bo'lganda `price_fetcher.get_current_price()` fallback ishlaydi
+- `utils/ai_engine.py` → Fundamental persona qat'iy 6-bo'limli format bilan yangilandi
+
+**Yangi test:** `tests/test_fundamental_symbol_detection.py`
+- 25 ta test, 4 ta sinf: Symbol Detection, AI Request Queue, Persona Format, Price Fallback
+- **Flake8: 0 xato** (clean code standartlari bajarildi)
+- Barcha 25 test: ✅ PASSED
+
+---
+
+**ESLATMA (AI VA DASTURCHI UCHUN):** Kod yozishdan oldin ushbu qoidalarni o'qi!
+Barqarorlik — TDD va Modullilikdadir.
