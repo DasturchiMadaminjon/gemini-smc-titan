@@ -1,5 +1,8 @@
 import pandas as pd
 import numpy as np
+import io
+import matplotlib.pyplot as plt
+import mplfinance as mpf
 from dataclasses import dataclass
 from typing import Optional, List, Dict, Tuple
 
@@ -137,9 +140,56 @@ class GeminiIndicator:
         true_range = np.max(ranges, axis=1)
         return true_range.rolling(14).mean().iloc[-1]
 
+
     # ------------------------------------------------------------------
-    # MAIN SIGNAL GENERATOR
+    # 6. VISUALIZATION ENGINE (For AI & Telegram)
     # ------------------------------------------------------------------
+
+    def draw_chart_bytes(self, df: pd.DataFrame, symbol: str, signal: Optional[Signal] = None) -> bytes:
+        """
+        OHLCV ma'lumotlarini rasmga (bytes) aylantirib beradi.
+        SMC darajalari (BOS, FVG, Entry, SL, TP) rasmda belgilanadi.
+        """
+        try:
+            # So'nggi 50 ta shamni olamiz
+            plot_df = df.tail(50).copy()
+            
+            # Ranglar sxemasi
+            mc = mpf.make_marketcolors(up='green', down='red', inherit=True)
+            s  = mpf.make_mpf_style(marketcolors=mc, gridstyle='dotted')
+            
+            # Qo'shimcha chiziqlar (Entry, SL, TP)
+            hlines = []
+            if signal:
+                hlines = [
+                    {'hlines': [signal.entry], 'colors': ['blue'], 'linestyle': 'solid', 'linewidths': 1},
+                    {'hlines': [signal.sl], 'colors': ['red'], 'linestyle': 'dashed', 'linewidths': 1},
+                    {'hlines': [signal.tp1], 'colors': ['green'], 'linestyle': 'dotted', 'linewidths': 1}
+                ]
+
+            buf = io.BytesIO()
+            
+            # Grafik chizish
+            fig, axes = mpf.plot(
+                plot_df,
+                type='candle',
+                style=s,
+                title=f"\n{symbol} ({plot_df.index[-1].strftime('%H:%M')})",
+                ylabel='Price',
+                hlines=hlines,
+                returnfig=True,
+                figsize=(10, 6)
+            )
+            
+            # Rasmni saqlash
+            fig.savefig(buf, format='png', bbox_inches='tight')
+            plt.close(fig)
+            buf.seek(0)
+            return buf.read()
+            
+        except Exception as e:
+            print(f"DEBUG: draw_chart_bytes error: {e}")
+            return b""
 
     def generate_signal(self, df: pd.DataFrame, symbol: str, tf: str = '15m', loss_streak: int = 0, htf_df: Optional[pd.DataFrame] = None) -> Optional[Signal]:
         if len(df) < 50: return None
