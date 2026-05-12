@@ -16,10 +16,13 @@ class AIEngine:
         env_keys = os.getenv("GEMINI_API_KEYS") or os.getenv("GEMINI_API_KEY")
         self.api_keys = []
         if api_keys:
-            self.api_keys = api_keys if isinstance(api_keys, list) else [api_keys]
+            if isinstance(api_keys, list):
+                self.api_keys = api_keys
+            else:
+                self.api_keys = [k.strip() for k in str(api_keys).split(",") if k.strip()]
         elif env_keys:
             self.api_keys = [
-                k.strip() for k in env_keys.split(",") if len(k.strip()) > 20
+                k.strip() for k in env_keys.split(",") if len(k.strip()) > 5
             ]
 
         self.current_key_index = 0
