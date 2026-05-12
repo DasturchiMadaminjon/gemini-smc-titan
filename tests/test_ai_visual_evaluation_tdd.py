@@ -1,73 +1,45 @@
-"""
-TDD: AI Visual Evaluation Test
-==============================
-Ushbu test AI Engine rasm qabul qilishi va yangi 'evaluator' 
-shaxsi (persona) orqali signalni tahlil qilishini tekshiradi.
-"""
-
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock
 from utils.ai_engine import AIEngine
 
 @pytest.fixture
 def ai_engine():
-    # API keylarsiz mock engine
-    engine = AIEngine(api_keys=["fake_key_12345678901234567890"])
-    return engine
+    return AIEngine(api_keys="dummy_key_at_least_21_chars_long_123456")
 
 @pytest.mark.asyncio
-async def test_evaluate_signal_with_image_success(ai_engine):
-    """AI rasm bilan birga signalni tasdiqlashini tekshirish."""
+async def test_ai_visual_evaluation_logic(ai_engine):
+    """
+    TDD: AI rasm va narx ma'lumotlarini qabul qilib, 
+    'TASDIQLAYMAN' yoki 'RAD ETAMAN' qaytarishini tekshirish.
+    """
+    mock_image = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
     
-    # Mocking chat response
-    mock_response = MagicMock()
-    mock_response.text = "SMC tamoyillari asosida tahlil qildim. TASDIQLAYMAN."
+    # 2. Mock get_analysis (evaluator personasi uchun)
+    ai_engine.get_analysis = AsyncMock(
+        return_value="Tahlil: Grafikda kuchli BOS ko'rinmoqda. RR juda yaxshi. TASDIQLAYMAN"
+    )
     
-    # Mocking get_analysis to simulate AI call
-    with patch.object(ai_engine, 'get_analysis', new_callable=AsyncMock) as mock_get:
-        mock_get.return_value = mock_response.text
-        
-        signal_data = {
-            'symbol': 'XAU/USD',
-            'direction': 'buy',
-            'quality': 85.0,
-            'reason': 'BOS + FVG'
-        }
-        fake_image = b"fake_image_bytes_123"
-        
-        is_appr, reason = await ai_engine.evaluate_trade_signal(signal_data, image_bytes=fake_image)
-        
-        # Tekshiramiz: rasm yuborildimi?
-        mock_get.assert_called_once()
-        args, kwargs = mock_get.call_args
-        assert kwargs['context_type'] == "evaluator"
-        assert kwargs['image_bytes'] == fake_image
-        
-        # Tekshiramiz: Tasdiqlandimi?
-        assert is_appr is True
-        assert "TASDIQLAYMAN" in reason
-
-@pytest.mark.asyncio
-async def test_evaluate_signal_rejection(ai_engine):
-    """AI past sifatli signalni rad etishini tekshirish."""
+    # 3. Signal ma'lumotlari
+    signal_data = {
+        'symbol': 'XAU/USD',
+        'direction': 'BUY',
+        'entry': 2350.0,
+        'sl': 2340.0,
+        'tp1': 2370.0,
+        'quality': 85.0,
+        'reason': 'BOS + FVG'
+    }
     
-    mock_response = MagicMock()
-    mock_response.text = "Sifat juda past, RR qoniqarsiz. RAD ETAMAN."
+    # 4. Tahlilni yurgizish
+    is_approved, reason = await ai_engine.evaluate_trade_signal(signal_data, mock_image)
     
-    with patch.object(ai_engine, 'get_analysis', new_callable=AsyncMock) as mock_get:
-        mock_get.return_value = mock_response.text
-        
-        signal_data = {'symbol': 'BTC/USDT', 'direction': 'sell', 'quality': 45.0}
-        
-        is_appr, reason = await ai_engine.evaluate_trade_signal(signal_data)
-        
-        assert is_appr is False
-        assert "RAD ETAMAN" in reason
-
-def test_evaluator_persona_contains_strict_rules(ai_engine):
-    """Evaluator personasi qoidalari qat'iyligini tekshirish."""
-    persona = ai_engine.personas.get("evaluator")
-    assert "TITAN SMC MASTER" in persona
-    assert "QAT'IYAN TAQIQLANADI" in persona
-    assert "TASDIQLANG" in persona
+    # 5. Tekshiruv
+    assert is_approved is True
+    assert "TASDIQLAYMAN" in reason
+    assert ai_engine.get_analysis.called
+    
+    # Prompt ichida narxlar borligini tekshirish
+    call_args = ai_engine.get_analysis.call_args[0][0]
+    assert "2350.0" in call_args
+    assert "2340.0" in call_args

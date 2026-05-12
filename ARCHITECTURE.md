@@ -145,6 +145,18 @@ Titan V27.2 boti endi oddiy algoritm emas, balki **"O'z-o'zini o'stiruvchi genet
 
 ---
 
+## 🧠 Visual AI & Master Brain (V27.2+)
+
+Titan V27.2 dan boshlab AI endi faqat matnli ma'lumot emas, balki haqiqiy bozor grafiklarini (PNG) tahlil qiladi.
+
+### Asosiy Imkoniyatlar:
+1. **Vision Analysis**: Har bir signal uchun `mplfinance` orqali 15m/5m grafik yaratiladi va AIga yuboriladi.
+2. **Persona: EVALUATOR**: AI endi "grafikni ko'rolmayman" degan bahonani ishlata olmaydi. U qat'iy SMC Master sifatida signalni tasdiqlashi yoki rad etishi shart.
+3. **Killzone Awareness**: AI joriy vaqtni (UTC) biladi va savdolarni London/Nyu-York Killzone vaqtlariga muvofiqligini tekshiradi.
+4. **Price Validation**: AI kirish narxi, SL va TP darajalarini ko'rib, Risk/Reward (RR) nisbatini baholaydi.
+
+---
+
 ## ⚠️ Texnik Qarzdorlik va Ogohlantirishlar (Technical Debt)
 
 2026-yil 12-maydagi 203 ta test natijasiga ko'ra quyidagilar qayd etildi:
