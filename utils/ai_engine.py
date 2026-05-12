@@ -115,10 +115,10 @@ class AIEngine:
                     temperature=0.3, # Yanada barqaror javob uchun
                     max_output_tokens=2048,
                     safety_settings=[
-                        types.SafetySetting(category="HATE_SPEECH", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="HARASSMENT", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
                     ]
                 )
 
@@ -135,37 +135,53 @@ class AIEngine:
                 return response.text
             except Exception as e:
                 err = str(e).upper()
-                # ✅ Muhim: Agar kalit bloklangan bo'lsa (403, LEAKED, PERMISSION_DENIED)
-                # Keyingi kalitga o'tish (Rotate)
+                
+                # 1. Eng muhimi: Kalit bloklansa, zudlik bilan rotate qilish
                 if "403" in err or "PERMISSION_DENIED" in err or "LEAKED" in err:
                     logger.error(f"⚠️ API Key bloklangan (Index {self.current_key_index}): {err[:100]}")
                     if self._rotate_key():
-                        continue # Yangi kalit bilan qayta urinish
+                        continue
                     else:
                         return f"❌ Barcha AI kalitlar bloklangan: {err[:50]}"
+                
+                # 2. Limit xatolari bo'lsa ham rotate qilish
+                if "429" in err or "RESOURCE EXHAUSTED" in err or "LIMIT" in err:
+                    logger.warning(f"⚠️ API Key limitga yetdi (Index {self.current_key_index}): {err[:50]}")
+                    if self._rotate_key():
+                        continue
+                    else:
+                        return f"❌ Barcha AI kalitlar limitga yetdi."
 
-                # 1. Google Search bilan bog'liq xatolar uchun fallback
+                # 3. Google Search bilan bog'liq xatolar uchun fallback
                 if "GOOGLE_SEARCH" in err or "400" in err or "INVALID_ARGUMENT" in err:
                     try:
                         logger.warning(f"Google Search fallback (Attempt {attempt+1})")
                         config_no_search = types.GenerateContentConfig(
                             system_instruction=full_instruction, 
-                            temperature=0.7,
-                            max_output_tokens=2048
+                            temperature=0.3,
+                            max_output_tokens=2048,
+                            safety_settings=[
+                                types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                            ]
                         )
-                        chat = self.client.chats.create(model=self.model_name, config=config_no_search)
-                        response = await asyncio.to_thread(chat.send_message, contents)
+                        response = await asyncio.to_thread(
+                            self.client.models.generate_content,
+                            model=self.model_name,
+                            contents=contents,
+                            config=config_no_search
+                        )
                         return response.text
                     except Exception as e2:
-                        err = str(e2)
+                        err = str(e2).upper()
                         logger.error(f"Fallback xatosi: {err[:50]}")
                 
-                # Agar boshqa turdagi xato bo'lsa, keyingi kalitni sinab ko'rish
-                if any(x in err for x in ["429", "RESOURCE EXHAUSTED", "LIMIT"]):
-                    if self._rotate_key():
-                        continue
-                return f"❌ AI xatoligi: {err[:100]}"
-        return "❌ Barcha API kalitlar band."
+                # Boshqa xatoliklar bo'lsa qaytaramiz (agar barcha looplar tugasa)
+                return f"❌ AI xatoligi: {str(e)[:100]}"
+                
+        return "❌ Barcha API kalitlar band yoki yaroqsiz."
 
     async def evaluate_trade_signal(self, signal_data: dict, image_bytes: bytes = None) -> tuple[bool, str]:
         """
