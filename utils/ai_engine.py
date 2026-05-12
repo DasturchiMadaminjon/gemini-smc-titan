@@ -112,35 +112,39 @@ class AIEngine:
                     max_output_tokens=2048,
                     tools=[types.Tool(google_search=types.GoogleSearch())],
                 )
-                import asyncio
 
                 chat = self.client.chats.create(model=self.model_name, config=config)
                 response = await asyncio.to_thread(chat.send_message, contents)
                 return response.text
             except Exception as e:
-                err = str(e)
-                # Agar Google Search yoki ruxsat bilan bog'liq xato bo'lsa (masalan, API key ruxsat bermasa)
-                if "google_search" in err or "400" in err or "INVALID_ARGUMENT" in err:
+                err = str(e).upper()
+                # ✅ Muhim: Agar kalit bloklangan bo'lsa (403, LEAKED, PERMISSION_DENIED)
+                # Keyingi kalitga o'tish (Rotate)
+                if "403" in err or "PERMISSION_DENIED" in err or "LEAKED" in err:
+                    logger.error(f"⚠️ API Key bloklangan (Index {self.current_key_index}): {err[:100]}")
+                    if self._rotate_key():
+                        continue # Yangi kalit bilan qayta urinish
+                    else:
+                        return f"❌ Barcha AI kalitlar bloklangan: {err[:50]}"
+
+                # 1. Google Search bilan bog'liq xatolar uchun fallback
+                if "GOOGLE_SEARCH" in err or "400" in err or "INVALID_ARGUMENT" in err:
                     try:
-                        logger.warning(
-                            f"Google Search fallback (Attempt {attempt+1}): {err[:50]}"
-                        )
+                        logger.warning(f"Google Search fallback (Attempt {attempt+1})")
                         config_no_search = types.GenerateContentConfig(
                             system_instruction=full_instruction, 
                             temperature=0.7,
                             max_output_tokens=2048
                         )
-                        import asyncio
-
-                        chat = self.client.chats.create(
-                            model=self.model_name, config=config_no_search
-                        )
+                        chat = self.client.chats.create(model=self.model_name, config=config_no_search)
                         response = await asyncio.to_thread(chat.send_message, contents)
                         return response.text
                     except Exception as e2:
                         err = str(e2)
-
-                if any(x in err for x in ["429", "Resource exhausted", "limit"]):
+                        logger.error(f"Fallback xatosi: {err[:50]}")
+                
+                # Agar boshqa turdagi xato bo'lsa, keyingi kalitni sinab ko'rish
+                if any(x in err for x in ["429", "RESOURCE EXHAUSTED", "LIMIT"]):
                     if self._rotate_key():
                         continue
                 return f"❌ AI xatoligi: {err[:100]}"
