@@ -105,30 +105,33 @@ class TradeManager:
 
         if self.cfg.get('trend', {}).get('fibo_split_enabled', True):
             e2 = sig.entry - (sig.entry - sig.sl) * 0.382
-            msg  = f"🚀 <b>YANGI SIGNAL: {sym}</b>\n"
-            msg += f"━━━━━━━━━━━━━━━━━━━━\n"
-            msg += f"🔔 Signal: <b>{direction_str}</b>\n"
-            msg += f"💎 Sifat: <code>{sig.quality:.1f}%</code>\n"
+            # 1. Rasm uchun qisqa sarlavha
+            short_msg  = f"🚀 <b>YANGI SIGNAL: {sym}</b>\n"
+            short_msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+            short_msg += f"🔔 Signal: <b>{direction_str}</b>\n"
+            short_msg += f"💎 Sifat: <code>{sig.quality:.1f}%</code>\n"
             if streak_warning:
-                msg += streak_warning
-            msg += f"\n📥 1-Kirish: <code>{sig.entry:.5g}</code>\n"
-            msg += f"📥 2-Kirish: <code>{e2:.5g}</code>\n"
-            msg += f"🛡 Stop-Loss: <code>{sig.sl:.5g}</code>\n\n"
-            msg += f"🎯 Maqsadlar:\n"
-            msg += f"   1. TP1: <code>{sig.tp1:.5g}</code>\n"
-            msg += f"   2. TP2: <code>{sig.tp2:.5g}</code>\n"
-            msg += f"   3. TP3: <code>{sig.tp3:.5g}</code>\n\n"
-            msg += f"🧠 <b>Asos:</b> {sig.reason}\n"
-            if ai_reason:
-                msg += f"\n🤖 <b>AI Xulosasi:</b> {ai_reason}\n"
-            msg += f"━━━━━━━━━━━━━━━━━━━━\n"
-            msg += f"🕐 <b>UZT:</b> {uzt.strftime('%H:%M')} | 🏛 <b>Terminal:</b> {terminal_time}\n"
-            msg += f"━━━━━━━━━━━━━━━━━━━━\n"
-            msg += pos_line + "\n"
-            msg += f"━━━━━━━━━━━━━━━━━━━━\n"
-            msg += f"⚡ Titan V27.2 Master"
+                short_msg += streak_warning
+            short_msg += f"\n📥 1-Kirish: <code>{sig.entry:.5g}</code>\n"
+            short_msg += f"📥 2-Kirish: <code>{e2:.5g}</code>\n"
+            short_msg += f"🛡 Stop-Loss: <code>{sig.sl:.5g}</code>\n\n"
+            short_msg += f"🎯 Maqsadlar:\n"
+            short_msg += f"   1. TP1: <code>{sig.tp1:.5g}</code>\n"
+            short_msg += f"   2. TP2: <code>{sig.tp2:.5g}</code>\n"
+            short_msg += f"   3. TP3: <code>{sig.tp3:.5g}</code>\n\n"
+            short_msg += f"🧠 <b>Asos:</b> {sig.reason}\n"
+            short_msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+            short_msg += f"🕐 <b>UZT:</b> {uzt.strftime('%H:%M')} | 🏛 <b>Terminal:</b> {terminal_time}\n"
+            short_msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+            short_msg += pos_line + "\n"
+            short_msg += f"━━━━━━━━━━━━━━━━━━━━\n"
+            short_msg += f"⚡ Titan V27.2 Master"
+
+            # 2. AI xulosasi uchun alohida matn
+            ai_msg = f"🤖 <b>{sym} BO'YICHA AI XULOSASI:</b>\n\n{ai_reason}" if ai_reason else ""
         else:
-            msg = f"🚀 Signal: {sym} @ {sig.entry}\nSL: {sig.sl}\n{pos_line}"
+            short_msg = f"🚀 Signal: {sym} @ {sig.entry}\nSL: {sig.sl}\n{pos_line}"
+            ai_msg = f"🤖 <b>AI Xulosasi:</b>\n{ai_reason}" if ai_reason else ""
 
         # ✅ #6: TP/SL inline tugmalari
         import json
@@ -139,16 +142,23 @@ class TradeManager:
             {'text': "⏭ O'tkazdim", 'callback_data': f"sig_skip:{sig_id}:{sym}"}
         ]]}
 
-        # ✅ #1: Chart rasm bilan birga yuborish
+        # ✅ #1: Chart rasm va qisqa ma'lumotni yuborish
         try:
             if chart_buf:
                 await self.notifier.send_photo(
-                    photo=chart_buf, caption=msg, kb=json.dumps(ikb)
+                    photo=chart_buf, caption=short_msg, kb=json.dumps(ikb)
                 )
                 logger.info(f"✅ [MANAGER] Signal {sym} sent with CHART photo.")
             else:
-                await self.notifier.send(msg, kb=json.dumps(ikb))
+                await self.notifier.send(short_msg, kb=json.dumps(ikb))
                 logger.info(f"✅ [MANAGER] Signal {sym} sent as TEXT (no chart).")
+                
+            # ✅ #2: AI xulosasini alohida yuborish (1024 limitini aylanib o'tish uchun)
+            if ai_msg:
+                # Tugmalarsiz oddiy matn tarzida yuboramiz
+                await self.notifier.send(ai_msg)
+                logger.info(f"🤖 [MANAGER] AI Analysis for {sym} sent separately.")
+                
         except Exception as e:
             logger.error(f"❌ [MANAGER] Failed to send {sym} to Telegram: {e}")
 
