@@ -650,10 +650,10 @@ class GeminiBot:
                                         self.telegram.onboarding_done
                                     )
 
-                                await self.telegram.send(f"✅ <b>VIRTUAL NATIJA: {symbol}</b>\nNatija: {result}\nNarx: {price}\nYangi Balans: <b>${self.bot_state['terminal']['balance']}</b>")
-                                print(f"[MONITOR] {symbol} natijasi: {result}")
+                                await self.telegram.send(f"✅ <b>VIRTUAL NATIJA: {current_symbol}</b>\nNatija: {result}\nNarx: {price}\nYangi Balans: <b>${self.bot_state['terminal']['balance']}</b>")
+                                print(f"[MONITOR] {current_symbol} natijasi: {result}")
                         except Exception as inner_e:
-                            print(f"[MONITOR ERROR] {symbol} signalini tekshirishda xato: {inner_e}")
+                            print(f"[MONITOR ERROR] {current_symbol} signalini tekshirishda xato: {inner_e}")
                             continue # Bitta signaldagi xato boshqalariga ta'sir qilmasligi kerak
                             
             except Exception as e:
