@@ -35,23 +35,26 @@ def test_monitor_loop_unpacking_safety():
     # Dummy bot instance (faqat mantiqni tekshirish uchun)
     class MockBot:
         def test_logic(self, sig_row):
-            # bot.py dagi monitor loop mantiqi
+            # bot.py dagi monitor loop mantiqi (DatabaseManager.get_pending_signals ga mos)
             sid = sig_row[0]
-            current_symbol = sig_row[2]
-            side = sig_row[3]
-            entry = sig_row[4]
-            sl = sig_row[5]
-            tp1 = sig_row[6]
+            current_symbol = sig_row[1]
+            side = sig_row[2]
+            entry = sig_row[3]
+            sl = sig_row[4]
+            tp1 = sig_row[5]
             return sid, current_symbol, side
 
     bot = MockBot()
     
-    # To'g'ri row (10 ta ustunli database row)
-    valid_row = (1, 'time', 'EUR/USD', 'buy', 1.05, 1.04, 1.07, 90, 'reason', 'pending')
+    # DatabaseManager.get_pending_signals() tartibi: 
+    # id(0), symbol(1), direction(2), entry(3), sl(4), tp1(5)
+    valid_row = (1, 'EUR/USD', 'BUY', 1.05, 1.04, 1.07)
     sid, sym, side = bot.test_logic(valid_row)
     assert sym == 'EUR/USD'
+    assert side == 'BUY'
     
-    # Kutilmagan uzunlikdagi row (faqat boshidagi ustunlar kerak)
-    long_row = (1, 'time', 'BTC/USDT', 'sell', 60000, 61000, 59000, 80, 'reason', 'pending', 'extra_col')
+    # Kutilmagan uzunlikdagi row
+    long_row = (1, 'BTC/USDT', 'SELL', 60000, 61000, 59000, 'extra_timestamp')
     sid, sym, side = bot.test_logic(long_row)
     assert sym == 'BTC/USDT'
+    assert side == 'SELL'

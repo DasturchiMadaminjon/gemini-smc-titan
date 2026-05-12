@@ -597,11 +597,11 @@ class GeminiBot:
                         try:
                             # sid, symbol, side, entry, sl, tp1 = sig
                             sid = sig_row[0]
-                            current_symbol = sig_row[2]
-                            side = sig_row[3]
-                            entry = sig_row[4]
-                            sl = sig_row[5]
-                            tp1 = sig_row[6]
+                            current_symbol = sig_row[1]
+                            side = sig_row[2]
+                            entry = sig_row[3]
+                            sl = sig_row[4]
+                            tp1 = sig_row[5]
                             
                             # Eski versiyadagi (SL/TP kiritilmagan) signallarni o'tkazib yuborish
                             if sl is None or tp1 is None:
