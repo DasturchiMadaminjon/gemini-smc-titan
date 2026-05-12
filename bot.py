@@ -592,17 +592,24 @@ class GeminiBot:
             try:
                 pending = self.db.get_pending_signals()
                 if pending:
-                    for sig in pending:
+                    for sig_row in pending:
+                        current_symbol = "Unknown"
                         try:
-                            sid, symbol, side, entry, sl, tp1 = sig
+                            # sid, symbol, side, entry, sl, tp1 = sig
+                            sid = sig_row[0]
+                            current_symbol = sig_row[2]
+                            side = sig_row[3]
+                            entry = sig_row[4]
+                            sl = sig_row[5]
+                            tp1 = sig_row[6]
                             
                             # Eski versiyadagi (SL/TP kiritilmagan) signallarni o'tkazib yuborish
                             if sl is None or tp1 is None:
                                 self.db.update_signal_result(sid, 'IGNORED (OLD)')
                                 continue
 
-                            # Joriy narxni olish (yfinance/ccxt abstraktsiyasi orqali)
-                            df_price = await self.exchange.fetch_ohlcv(symbol, '1m', limit=2)
+                            # Joriy narxni olish
+                            df_price = await self.exchange.fetch_ohlcv(current_symbol, '1m', limit=2)
                             if df_price is None or df_price.empty:
                                 raise Exception("Narxni olib bo'lmadi")
                             price = df_price['close'].iloc[-1]
@@ -617,9 +624,8 @@ class GeminiBot:
                             
                             if result:
                                 self.db.update_signal_result(sid, result)
-                                # Agar savdo yopilsa, uni historyga ham qo'shamiz (Statistika uchun)
                                 r_gain = float(self.cfg.get('tp', {}).get('tp1_mult', 1.5)) if 'WIN' in result else -1.0
-                                self.db.add_history(datetime.now().strftime('%H:%M'), symbol, side.upper()=='BUY', entry, result, r_gain)
+                                self.db.add_history(datetime.now().strftime('%H:%M'), current_symbol, side.upper()=='BUY', entry, result, r_gain)
                                 
                                 # BALANSNI YANGILASH VA LOSS STREAK NI BOSHQARISH
                                 with self.lock:
