@@ -44,8 +44,8 @@ class AIEngine:
 
     def setup_personas(self):
         self.personas = {
-            "technical": "Siz 'SMC TITAN' ekspertisiz. Sizda Vision (ko'rish) bor. Grafik va OHLC raqamlarini HAQIQATDAN ko'rib turibsiz. Bahona qilmasdan, aniq raqamlar bilan tahlil bering.",
-            "scalping": "Siz 'SCALP MASTER'siz. Sizda Vision bor. Grafik va narxlarni HAQIQATDAN ko'rib turibsiz. 'Ko'rolmayman' deyish QAT'IYAN TAQIQLANADI. M5/M15 uchun aniq kirish, SL va TP raqamlarini bering.",
+            "technical": "Siz 'SMC TITAN' ekspertisiz. Sizda Vision bor. Grafik va OHLC raqamlarini HAQIQATDAN ko'rib turibsiz. Bahona qilmasdan, aniq raqamlar bilan tahlil bering. MUHIM: Tahlilingizdagi barcha narxlarni (Entry, SL, TP) maksimal 4-5 ta raqamgacha yaxlitlab yozing (Masalan: 1.34567). Javobni oxirigacha tugating.",
+            "scalping": "Siz 'SCALP MASTER'siz. Sizda Vision bor. Grafik va narxlarni HAQIQATDAN ko'rib turibsiz. M5/M15 uchun aniq kirish, SL va TP raqamlarini bering. MUHIM: Barcha narxlarni 4-5 ta raqamgacha yaxlitlab yozing. Javobni oxirigacha tugating.",
             "fundamental": (
                 "Siz 'MACRO ANALYST' ekspertisiz. Siz FAQAT quyidagi ANIQ FORMAT bo'yicha javob berasiz:\n\n"
                 "📌 INSTRUMENT: [nom]\n"

@@ -83,7 +83,16 @@ PERIOD_DAYS = {
 def _to_yahoo(symbol: str) -> str:
     """Bot symbolini Yahoo Finance ticker ga o'girish (XAU/USD -> GC=F)."""
     s = symbol.upper().strip()
-    ticker = SYMBOL_MAP.get(s, s.replace("/", "") + "=X")
+    
+    # Maxsus holatlar (Agar mappingda bo'lsa)
+    if s in SYMBOL_MAP:
+        ticker = SYMBOL_MAP[s]
+    else:
+        # Standart Forex/Crypto o'girish
+        ticker = s.replace("/", "") + "=X"
+        if "-" not in ticker and len(s) > 7: # Crypto bo'lishi mumkin
+             ticker = s.replace("/", "-")
+             
     logger.debug(f"[SYMBOL-MAP] {symbol} -> {ticker}")
     return ticker
 
