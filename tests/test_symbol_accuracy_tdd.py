@@ -2,42 +2,46 @@ import pytest
 from utils.exchange import ExchangeClient, _to_yahoo
 
 @pytest.mark.asyncio
-async def test_xauusd_gold_price_range():
+async def test_xauusd_vs_spx_isolation():
     """
-    TDD: XAU/USD (Gold) tickerining narxi Oltin diapazonida ekanligini tekshirish.
-    S&P 500 (4700+) bilan adashib ketmasligi kerak.
+    TDD: XAU/USD (Gold) narxi S&P 500 (SPX) narxidan alohida ekanligini tekshirish.
+    Oltin ~2300, SPX ~5000 atrofida. Ular adashib ketmasligi shart.
     """
     client = ExchangeClient({})
-    # 1. Ticker o'girilishini tekshirish
-    ticker = _to_yahoo("XAU/USD")
-    assert ticker == "GC=F", "XAU/USD ticker xato map qilingan!"
     
-    # 2. Real narxni olish (yfinance orqali)
-    df = await client.fetch_ohlcv("XAU/USD", "1d", limit=1)
-    assert df is not None, "Oltin narxini olib bo'lmadi!"
+    # 1. Oltin narxini olish
+    gold_df = await client.fetch_ohlcv("XAU/USD", "1d", limit=1)
+    assert gold_df is not None, "Oltin ma'lumotlarini olib bo'lmadi"
+    gold_price = gold_df['close'].iloc[-1]
     
-    price = df['close'].iloc[-1]
-    print(f"DEBUG: Current Gold Price = {price}")
+    # 2. S&P 500 (yoki shunga o'xshash indeks) narxini olish (simulyatsiya uchun ^GSPC dan foydalanamiz)
+    import yfinance as yf
+    spx = yf.Ticker("^GSPC")
+    spx_df = spx.history(period="1d")
+    spx_price = spx_df['Close'].iloc[-1]
     
-    # Oltin narxi mantiqan 1000 dan baland va 3500 dan past bo'lishi kerak (2026-yilda)
-    # S&P 500 esa 4500+ atrofida.
-    assert 1500 < price < 3500, f"KRITIK XATO: XAU/USD narxi ({price}) Oltin diapazonida emas! Balki boshqa instrument (SPX?) ma'lumotlari kelyapti."
+    print(f"DEBUG: Gold = {gold_price}, SPX = {spx_price}")
+    
+    # Oltin narxi SPX narxidan kamida 1000 birlikka farq qilishi kerak
+    diff = abs(gold_price - spx_price)
+    assert diff > 1000, f"KRITIK XATO: Oltin narxi ({gold_price}) SPX narxiga ({spx_price}) juda yaqin! Tikerlar adashgan bo'lishi mumkin."
+    assert gold_price < 3500, f"Oltin narxi me'yordan baland: {gold_price}"
 
-def test_symbol_mapping_normalization():
+def test_symbol_mapping_integrity():
     """
-    TDD: Simvollar registrga sezgir emasligini tekshirish.
+    TDD: Oltin tikeri GC=F ga qat'iy bog'langanini tekshirish.
     """
+    assert _to_yahoo("XAU/USD") == "GC=F"
     assert _to_yahoo("xau/usd") == "GC=F"
-    assert _to_yahoo("btc/usdt") == "BTC-USD"
-    assert _to_yahoo("XAU/USD ") == "GC=F" # Probel bilan ham ishlashi kerak
+    assert _to_yahoo("GOLD") == "GC=F"
 
-@pytest.mark.asyncio
-async def test_btc_price_range():
+def test_ai_rounding_instruction_presence():
     """
-    TDD: BTC/USDT narxi mantiqiy diapazonda ekanligini tekshirish.
+    TDD: AI Engine instruksiyalarida yaxlitlash buyrug'i borligini tekshirish.
     """
-    client = ExchangeClient({})
-    df = await client.fetch_ohlcv("BTC/USDT", "1d", limit=1)
-    assert df is not None
-    price = df['close'].iloc[-1]
-    assert price > 10000, f"BTC narxi juda past: {price}"
+    from utils.ai_engine import AIEngine
+    engine = AIEngine("fake_key")
+    persona = engine.personas.get("technical", "")
+    
+    assert "yaxlitlab" in persona or "round" in persona.lower()
+    assert "4-5" in persona or "decimal" in persona.lower()

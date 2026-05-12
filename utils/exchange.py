@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 SYMBOL_MAP = {
     # Metals
     "XAU/USD": "GC=F",
+    "GOLD": "GC=F",
     "XAG/USD": "SI=F",
     "OIL/USD": "CL=F",
 
