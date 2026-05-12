@@ -159,13 +159,11 @@ class GeminiIndicator:
             s  = mpf.make_mpf_style(marketcolors=mc, gridstyle='dotted')
             
             # Qo'shimcha chiziqlar (Entry, SL, TP)
-            hlines = []
+            hlines_prices = []
+            hlines_colors = []
             if signal:
-                hlines = [
-                    {'hlines': [float(signal.entry)], 'colors': ['blue'], 'linestyle': 'solid', 'linewidths': 1},
-                    {'hlines': [float(signal.sl)], 'colors': ['red'], 'linestyle': 'dashed', 'linewidths': 1},
-                    {'hlines': [float(signal.tp1)], 'colors': ['green'], 'linestyle': 'dotted', 'linewidths': 1}
-                ]
+                hlines_prices = [float(signal.entry), float(signal.sl), float(signal.tp1)]
+                hlines_colors = ['blue', 'red', 'green']
 
             buf = io.BytesIO()
             
@@ -176,7 +174,7 @@ class GeminiIndicator:
                 style=s,
                 title=f"\n{symbol} ({plot_df.index[-1].strftime('%H:%M')})",
                 ylabel='Price',
-                hlines=hlines,
+                hlines=dict(hlines=hlines_prices, colors=hlines_colors, linestyle='dashed'),
                 returnfig=True,
                 figsize=(10, 6)
             )
