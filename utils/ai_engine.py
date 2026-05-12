@@ -109,18 +109,29 @@ class AIEngine:
             try:
                 # 1. Google Search bilan urinib ko'rish
                 # SDK muvofiqligi uchun eng sodda va xavfsiz konfiguratsiya
-                # Qat'iy konfiguratsiya: max_output_tokens=2048 va temperature=0.4 (barqarorlik uchun)
+                # Qat'iy konfiguratsiya
                 config = types.GenerateContentConfig(
-                    system_instruction=full_instruction + " MUHIM: Har doim javobni oxirigacha, to'liq yakunlab yozing.",
-                    temperature=0.4,
+                    system_instruction=full_instruction + " MUHIM: Tahlilni to'liq yakunlang va eng oxirida [TAMOM] so'zini yozing.",
+                    temperature=0.3, # Yanada barqaror javob uchun
                     max_output_tokens=2048,
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    safety_settings=[
+                        types.SafetySetting(category="HATE_SPEECH", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARASSMENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                    ]
                 )
 
-                chat = self.client.chats.create(model=self.model_name, config=config)
-                response = await asyncio.to_thread(chat.send_message, contents, config=config)
-                if not response.text or len(response.text) < 10:
-                    raise Exception("AI javobi juda qisqa yoki bo'sh")
+                # Chat sessiyasidan ko'ra generate_content ishonchliroq (stateless)
+                response = await asyncio.to_thread(
+                    self.client.models.generate_content,
+                    model=self.model_name,
+                    contents=contents,
+                    config=config
+                )
+                
+                if not response.text:
+                    raise Exception("AI bo'sh javob qaytardi")
                 return response.text
             except Exception as e:
                 err = str(e).upper()
