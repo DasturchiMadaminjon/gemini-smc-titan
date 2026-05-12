@@ -86,48 +86,43 @@ def _to_yahoo(symbol: str) -> str:
 
 
 def _fetch_sync(ticker: str, interval: str, period: str, limit: int) -> Optional[pd.DataFrame]:
-    """Sinxron yfinance chaqiruvi (run_in_executor ichida ishlatiladi)."""
-    try:
-        tk = yf.Ticker(ticker)
-        df = tk.history(period=period, interval=interval, auto_adjust=True)
+    """Sinxron yfinance chaqiruvi (3 marta qayta urinish bilan)."""
+    import time as _time
+    for attempt in range(3):
+        try:
+            tk = yf.Ticker(ticker)
+            df = tk.history(period=period, interval=interval, auto_adjust=True)
 
-        if df is None or df.empty:
-            logger.debug(f"yfinance: {ticker} uchun ma'lumot qaytmadi.")
-            return None
+            if df is not None and not df.empty:
+                # Ustun nomlarini kichik harfga o'girish
+                df.columns = [c.lower() for c in df.columns]
+                
+                # Kerakli ustunlarni tanlash
+                needed = ['open', 'high', 'low', 'close', 'volume']
+                if all(c in df.columns for c in needed):
+                    df = df[needed].copy()
+                    
+                    # Index ni UTC ga o'girish
+                    if df.index.tzinfo is None:
+                        df.index = df.index.tz_localize('UTC')
+                    else:
+                        df.index = df.index.tz_convert('UTC')
+                    
+                    df.dropna(inplace=True)
+                    if len(df) > limit:
+                        df = df.tail(limit)
+                    
+                    if not df.empty:
+                        return df.astype(float)
 
-        # Ustun nomlarini kichik harfga o'girish
-        df.columns = [c.lower() for c in df.columns]
-
-        # Kerakli ustunlarni tanlash
-        needed = ['open', 'high', 'low', 'close', 'volume']
-        missing = [c for c in needed if c not in df.columns]
-        if missing:
-            logger.warning(f"yfinance: {ticker} — ustunlar yo'q: {missing}")
-            return None
-
-        df = df[needed].copy()
-
-        # Index ni UTC ga o'girish
-        if df.index.tzinfo is None:
-            df.index = df.index.tz_localize('UTC')
-        else:
-            df.index = df.index.tz_convert('UTC')
-
-        # NaN qatorlarni olib tashlash
-        df.dropna(inplace=True)
-
-        # Oxirgi `limit` ta sham
-        if len(df) > limit:
-            df = df.tail(limit)
-
-        if df.empty:
-            return None
-
-        return df.astype(float)
-
-    except Exception as e:
-        logger.debug(f"yfinance xato ({ticker}): {e}")
-        return None
+            # Agar bo'sh bo'lsa yoki xato bo'lsa, biroz kutib qayta urinish
+            _time.sleep(0.5 * (attempt + 1))
+        except Exception as e:
+            logger.debug(f"yfinance urinish {attempt+1} xato ({ticker}): {e}")
+            _time.sleep(0.5 * (attempt + 1))
+            
+    logger.warning(f"yfinance: {ticker} uchun 3 ta urinishdan keyin ham ma'lumot olib bo'lmadi.")
+    return None
 
 
 def _resample_4h(df: pd.DataFrame) -> pd.DataFrame:

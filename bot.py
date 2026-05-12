@@ -613,10 +613,11 @@ class GeminiBot:
                                 self.db.update_signal_result(sid, 'IGNORED (OLD)')
                                 continue
 
-                            # Joriy narxni olish
-                            df_price = await self.exchange.fetch_ohlcv(current_symbol, '5m', limit=2)
+                            # Joriy narxni olish (15m barqarorroq)
+                            df_price = await self.exchange.fetch_ohlcv(current_symbol, '15m', limit=2)
                             if df_price is None or df_price.empty:
-                                raise Exception("Narxni olib bo'lmadi")
+                                # Har bir muammo uchun exception otmaymiz, shunchaki keyingisiga o'tamiz
+                                continue
                             price = df_price['close'].iloc[-1]
                             
                             result = None
