@@ -485,11 +485,11 @@ class GeminiBot:
                             sig_data = {
                                 'symbol': s,
                                 'direction': sig.direction,
-                                'entry': sig.entry,
-                                'sl': sig.sl,
-                                'tp1': sig.tp1,
-                                'tp2': sig.tp2,
-                                'tp3': sig.tp3,
+                                'entry': round(float(sig.entry), 5),
+                                'sl': round(float(sig.sl), 5),
+                                'tp1': round(float(sig.tp1), 5),
+                                'tp2': round(float(sig.tp2), 5) if sig.tp2 else None,
+                                'tp3': round(float(sig.tp3), 5) if sig.tp3 else None,
                                 'quality': sig.quality,
                                 'reason': sig.reason,
                                 'time_utc': datetime.now(timezone.utc).strftime('%H:%M')
