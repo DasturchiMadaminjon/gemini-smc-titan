@@ -609,7 +609,7 @@ class GeminiBot:
                                 continue
 
                             # Joriy narxni olish
-                            df_price = await self.exchange.fetch_ohlcv(current_symbol, '1m', limit=2)
+                            df_price = await self.exchange.fetch_ohlcv(current_symbol, '5m', limit=2)
                             if df_price is None or df_price.empty:
                                 raise Exception("Narxni olib bo'lmadi")
                             price = df_price['close'].iloc[-1]
