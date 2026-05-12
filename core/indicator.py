@@ -162,9 +162,9 @@ class GeminiIndicator:
             hlines = []
             if signal:
                 hlines = [
-                    {'hlines': [signal.entry], 'colors': ['blue'], 'linestyle': 'solid', 'linewidths': 1},
-                    {'hlines': [signal.sl], 'colors': ['red'], 'linestyle': 'dashed', 'linewidths': 1},
-                    {'hlines': [signal.tp1], 'colors': ['green'], 'linestyle': 'dotted', 'linewidths': 1}
+                    {'hlines': [float(signal.entry)], 'colors': ['blue'], 'linestyle': 'solid', 'linewidths': 1},
+                    {'hlines': [float(signal.sl)], 'colors': ['red'], 'linestyle': 'dashed', 'linewidths': 1},
+                    {'hlines': [float(signal.tp1)], 'colors': ['green'], 'linestyle': 'dotted', 'linewidths': 1}
                 ]
 
             buf = io.BytesIO()
