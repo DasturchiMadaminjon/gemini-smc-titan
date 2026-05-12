@@ -81,8 +81,11 @@ PERIOD_DAYS = {
 
 
 def _to_yahoo(symbol: str) -> str:
-    """Bot symbolini Yahoo Finance ticker ga o'girish."""
-    return SYMBOL_MAP.get(symbol, symbol.replace("/", "") + "=X")
+    """Bot symbolini Yahoo Finance ticker ga o'girish (XAU/USD -> GC=F)."""
+    s = symbol.upper().strip()
+    ticker = SYMBOL_MAP.get(s, s.replace("/", "") + "=X")
+    logger.debug(f"[SYMBOL-MAP] {symbol} -> {ticker}")
+    return ticker
 
 
 def _fetch_sync(ticker: str, interval: str, period: str, limit: int) -> Optional[pd.DataFrame]:

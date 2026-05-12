@@ -109,6 +109,7 @@ class AIEngine:
                 config = types.GenerateContentConfig(
                     system_instruction=full_instruction,
                     temperature=0.7,
+                    max_output_tokens=2048,
                     tools=[types.Tool(google_search=types.GoogleSearch())],
                 )
                 import asyncio
@@ -125,7 +126,9 @@ class AIEngine:
                             f"Google Search fallback (Attempt {attempt+1}): {err[:50]}"
                         )
                         config_no_search = types.GenerateContentConfig(
-                            system_instruction=full_instruction, temperature=0.7
+                            system_instruction=full_instruction, 
+                            temperature=0.7,
+                            max_output_tokens=2048
                         )
                         import asyncio
 
