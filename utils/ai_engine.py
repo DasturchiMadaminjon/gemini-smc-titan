@@ -113,7 +113,7 @@ class AIEngine:
                 config = types.GenerateContentConfig(
                     system_instruction=full_instruction + " MUHIM: Tahlilni to'liq yakunlang va eng oxirida [TAMOM] so'zini yozing.",
                     temperature=0.3, # Yanada barqaror javob uchun
-                    max_output_tokens=2048,
+                    max_output_tokens=8192,
                     safety_settings=[
                         types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
                         types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
@@ -159,7 +159,7 @@ class AIEngine:
                         config_no_search = types.GenerateContentConfig(
                             system_instruction=full_instruction, 
                             temperature=0.3,
-                            max_output_tokens=2048,
+                            max_output_tokens=8192,
                             safety_settings=[
                                 types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
                                 types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
@@ -201,16 +201,20 @@ class AIEngine:
             f"🎯 MAQSAD (TP1): {signal_data.get('tp1', 'N/A')}\n"
             f"💎 INDIKATOR SIFATI: {quality}%\n"
             f"🧠 INDIKATOR ASOSI: {reason}\n\n"
-            f"VAZIFA: Ushbu signalni tahlil qiling. Agar {quality} < 60 bo'lsa, qat'iyroq tahlil qiling. "
-            f"SMC tamoyillari (Structure, Liquidity, FVG) bo'yicha baho bering. "
-            f"Javob oxirida 'TASDIQLAYMAN' yoki 'RAD ETAMAN' deb yozish shart!"
+            f"VAZIFA: Ushbu signalni SMC tamoyillari (Structure, Liquidity, FVG) bo'yicha tahlil qiling. "
+            f"Agar {quality} < 60 bo'lsa, qat'iyroq yondashing.\n\n"
+            f"🔴 MUHIM QOIDA (VERDICT FIRST): "
+            f"Eng birinchi qatorda faqatgina bitta so'z: 'TASDIQLANDI' yoki 'RAD ETILDI' deb yozing. "
+            f"Faqat shundan keyingina batafsil tahlilingizni (nima uchun bunday xulosaga kelganingizni) yozishni boshlang!"
         )
         
         # evaluator personasini ishlatamiz
         resp = await self.get_analysis(prompt, context_type="evaluator", image_bytes=image_bytes)
-        lower = resp.lower()
         
-        # Tasdiqlash mantiqi (stricter)
-        if "tasdiqlayman" in lower or "tasdiq" in lower or "approve" in lower:
+        # Tasdiqlash mantiqi (stricter & safer)
+        # Xabarning faqat dastlabki 100 ta belgisini tekshiramiz (sababi verdict birinchi qatorda bo'lishi shart)
+        first_lines = resp[:100].upper()
+        if "TASDIQLANDI" in first_lines or "TASDIQLAYMAN" in first_lines or "APPROVE" in first_lines:
             return True, resp
         return False, resp
+
