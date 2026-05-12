@@ -118,19 +118,48 @@ Titan V27.2 boti endi oddiy algoritm emas, balki **"O'z-o'zini o'stiruvchi genet
 
 ---
 
-## 🔄 Fayllar Bog'liqlik Xaritasi (Maintenance Map)
+## 🔄 Oxirgi O'zgarishlar (Changelog)
 
-Har qanday faylni o'zgartirganda, quyidagi bog'liqliklarni tekshirish shart:
+### [12.05.2026] - Data Source Migratsiyasi & AWS Fix
+- **Exchange Migration**: Binance API AWS EC2 IP-larini bloklagani sababli (`400 Bad Request`), barcha ma'lumot olish tizimi `yfinance` (Yahoo Finance) ga ko'chirildi.
+- **Instrument Coverage**: Endi Oltin (GC=F), Forex (EURUSD=X) va Kripto (BTC-USD) bir xil ishonchli manbadan olinadi.
+- **Quality Logic Fix**: Telegram menyusi orqali sifatni 50% ga tushirish `settings.yaml` ga yozilishi va `bot.py` tomonidan har siklda o'qilishi ta'minlandi.
+- **TDD Pass**: Barcha zanjirli testlar yangi `ExchangeClient` bilan muvaffaqiyatli o'tdi.
+
+### [11.05.2026] - Fundamental AI & Symbol Detection
+- **FSM Symbol Detection**: Foydalanuvchi matnidan instrumentni (masalan, "gold" -> "XAU/USD") aniqlash mantiqi qo'shildi.
+- **Price Fallback**: Agar xotirada narx bo'lmasa, AI tahlili uchun narx avtomatik ravishda `price_fetcher` orqali olinadi.
+- **Persona Engineering**: Fundamental AI tahlili uchun qat'iy format (INSTRUMENT, NARX, BIAS...) joriy etildi.
+
+---
+
+## 🔄 Fayllar Bog'liqlik Xaritasi (Yangilangan)
 
 | Yangilangan Fayl | Birga tekshirilishi kerak | Sababi |
 | :--- | :--- | :--- |
-| `core/indicator.py` | `tests/test_signal_flow_tdd.py` | Matematik mantiq va signal generation testi. |
-| `utils/ai_engine.py` | `tests/test_ai_buttons_logic.py`, `tests/test_fundamental_symbol_detection.py` | AI persona, SDK va format qoidalari. |
-| `utils/telegram.py` | `tests/test_all_buttons_tdd.py`, `tests/test_fundamental_symbol_detection.py` | UI/UX tugmalar, symbol detection va menyu strukturasi. |
-| `utils/exchange.py` | `tests/test_async_integrity.py` | Asinxronlik (Async/Await) va API ulanishlar. |
-| `bot.py` | `watchdog.py`, `ARCHITECTURE.md` | Asosiy tsikl, Heartbeat va arxitektura. |
-| `requirements.txt` | `setup.sh` | Kutubxonalar va virtual muhit barqarorligi. |
+| `utils/exchange.py` | `bot.py`, `tests/test_logic.py` | Data manbai o'zgarsa, barcha skanerlar tekshiriladi. |
+| `core/indicator.py` | `tests/test_signal_flow_tdd.py` | Matematik mantiq test bilan tasdiqlanishi shart. |
+| `utils/telegram.py` | `tests/test_all_buttons_tdd.py` | UI o'zgarsa, test ham o'zgaradi. |
+| `bot.py` | `watchdog.py`, `ARCHITECTURE.md` | Asosiy sikl o'zgarsa, heartbeat va xarita yangilanadi. |
 | `utils/price_fetcher.py` | `tests/test_fundamental_symbol_detection.py` | Narx olish fallback mantiq — `narx=0` muammosi. |
+
+---
+
+## ⚠️ Texnik Qarzdorlik va Ogohlantirishlar (Technical Debt)
+
+2026-yil 12-maydagi 203 ta test natijasiga ko'ra quyidagilar qayd etildi:
+
+1. **AI SDK Yangilanishi**: Hozirda `google-generativeai` ishlatilmoqda. Google ushbu paketni qo'llab-quvvatlashni to'xtatgan. Kelgusida tizimni yangi `google.genai` (V1) SDK-ga o'tkazish tavsiya etiladi.
+2. **Python 3.14 Mosligi**: Ayrim ichki kutubxonalar (`httplib2`) yangi Python versiyasida `DeprecationWarning` bermoqda. Bu hozirgi ishlashga ta'sir qilmaydi, lekin kutubxonalarni vaqti-vaqti bilan yangilab turish shart.
+3. **Data Throttling**: `yfinance` ommaviy API bo'lgani uchun, juda ko'p (masalan, 50+ instrument) so'rov yuborilsa, vaqtinchalik limitga tushishi mumkin. Hozirgi 13 ta instrument uchun bu xavfsiz.
+
+---
+
+> [!IMPORTANT]
+> **Keyingi qadamlar:**
+> 1. Har doim `python -m pytest` yurgizish.
+> 2. `logs/watchdog.log` orqali jonli nazorat qilish.
+> 3. Yangi instrument qo'shilsa, `utils/exchange.py` dagi `SYMBOL_MAP` ni yangilash.
 
 ## ⚡️ Asinxronlik Qoidalari (Async Engine Rules)
 

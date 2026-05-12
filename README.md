@@ -9,7 +9,8 @@ Bu loyiha **SMC (Smart Money Concepts)** trading strategiyasi asosida qurilgan, 
 4. **Self-Optimization (Genetic Engine):** Bot har 1 soatda o'z savdo tarixini tahlil qilib, SMC indikatorlarining sozlamalarini (`min_quality`, `tp_multiplier`) avtomatik tarzda optimallashtiradi.
 5. **Watchdog:** AWS-da bot to'xtab qolmasligi uchun avtomatik restart va soatlik limit nazoratiga ega.
 6. **Dynamic Quality Engine:** `min_quality` sozlamasi endi qat'iy emas, balki ballar yig'indisi (Trend, FVG, RR, Zone) asosida ishlaydi va bozordagi "shovqin"ni 5 baravargacha kamaytiradi.
-7. **Enhanced Backtest:** 2026-yil 1-apreldan boshlab uzoq muddatli tahlil qilish va natijalarni Telegramga PDF/Xabar ko'rinishida yuborish imkoniyati qo'shildi.
+7. **Multi-Asset Data (yfinance):** AWS EC2 blokirovkalari chetlab o'tilgan. Oltin (Gold), Forex va Kripto ma'lumotlari yfinance orqali uzluksiz olinadi.
+8. **Enhanced Backtest:** 2026-yil 1-apreldan boshlab uzoq muddatli tahlil qilish va natijalarni Telegramga PDF/Xabar ko'rinishida yuborish imkoniyati qo'shildi.
 
 ## 📂 Loyiha Strukturasi (DNK Xaritasi)
 - `bot.py`: Tizimning yuragi (Monitor Loop + AI Loop).
@@ -30,8 +31,8 @@ Loyihani turli muhitlarda (Windows, AWS, PythonAnywhere) boshqarish uchun barcha
 3. `python bot.py` orqali ishga tushiring.
 
 ## 🛠 Xavfsizlik va Nazorat
-- **Loglar:** `bot_log.txt` da barcha harakatlar (Signal yuborish, AI tahlili) muhrlanadi.
-- **Restart:** `run.sh` bot o'chib qolsa, uni avtomatik qayta yoqadi.
+- **Loglar:** `logs/bot.log` da barcha harakatlar (Signal yuborish, AI tahlili) muhrlanadi. Watchdog loglari esa `logs/watchdog.log` da.
+- **Restart:** `watchdog.py` bot o'chib qolsa, uni avtomatik qayta yoqadi.
 - **Audit:** `tests/trader_audit.py` orqali tizimning strategik sog'lig'ini tekshirish mumkin.
 
 ---
