@@ -1,39 +1,43 @@
-# 🔱 Titan V27.2 Master Engine (2026 Edition)
+# Titan V27.2 SMC Trading Bot 🤖💹
 
-Bu loyiha **SMC (Smart Money Concepts)** trading strategiyasi asosida qurilgan, 24/7 ishlovchi avtonom AI tizimidir. Loyihaning har bir qismi "Genetik Kod" tamoyillari asosida modullashtirilgan.
+Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, Gemini AI bilan tasdiqlanadigan avtonom trading bot.
 
-## 🧬 Genetik Kod Tamoyillari
-1. **TDD (Test-Driven):** Barcha mantiq `tests/` papkasidagi testlar bilan 100% qoplangan.
-2. **AI Native:** Gemini 2.5 Flash va Google Search integratsiyasi orqali real vaqtda internetdan ma'lumot tahlil qiladi.
-3. **RAG (Knowledge):** `bilim_bazasi/` ichidagi barcha PDF va TXT fayllarni o'qib, shogirdlarga professional tushuntirish bera oladi.
-4. **Self-Optimization (Genetic Engine):** Bot har 1 soatda o'z savdo tarixini tahlil qilib, SMC indikatorlarining sozlamalarini (`min_quality`, `tp_multiplier`) avtomatik tarzda optimallashtiradi.
-5. **Watchdog:** AWS-da bot to'xtab qolmasligi uchun avtomatik restart va soatlik limit nazoratiga ega.
-6. **Dynamic Quality Engine:** `min_quality` sozlamasi endi qat'iy emas, balki ballar yig'indisi (Trend, FVG, RR, Zone) asosida ishlaydi va bozordagi "shovqin"ni 5 baravargacha kamaytiradi.
-7. **Multi-Asset Data (yfinance):** AWS EC2 blokirovkalari chetlab o'tilgan. Oltin (Gold), Forex va Kripto ma'lumotlari yfinance orqali uzluksiz olinadi.
-8. **Enhanced Backtest:** 2026-yil 1-apreldan boshlab uzoq muddatli tahlil qilish va natijalarni Telegramga PDF/Xabar ko'rinishida yuborish imkoniyati qo'shildi.
+## ✨ Xususiyatlari
+- **Professional SMC Tahlil**: BOS, OrderBlock, FVG va Liquidity.
+- **AI Validation**: Gemini Vision orqali grafikni "ko'rib" qaror qabul qilish.
+- **24/7 Avtonomiya**: AWS EC2 uchun optimallashtirilgan Watchdog tizimi.
+- **TDD Safety**: 100% testlardan o'tgan barqaror kod bazasi.
 
-## 📂 Loyiha Strukturasi (DNK Xaritasi)
-- `bot.py`: Tizimning yuragi (Monitor Loop + AI Loop).
-- `core/`: Matematik ko'z (SMC Indicator + Manager).
-- `utils/ai_engine.py`: Tizimning miyasi (Gemini 2.5 + Google Search).
-- `utils/rag_engine.py`: Tizimning xotirasi (Vector Search).
-- `utils/telegram.py`: Tizimning ko'rinishi (Professional UI/UX).
+## 🚀 O'rnatish (AWS EC2)
 
-## 🚀 Ishga tushirish va Buyruqlar
+1. **Repozitoriyani yuklash**:
+   ```bash
+   git clone https://github.com/DasturchiMadaminjon/gemini-smc-titan.git
+   cd gemini-smc-titan
+   ```
 
-Loyihani turli muhitlarda (Windows, AWS, PythonAnywhere) boshqarish uchun barcha buyruqlar va test ko'rsatmalari alohida faylda jamlangan:
+2. **Kutubxonalarni o'rnatish**:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
 
-👉 **[COMMANDS.md](./COMMANDS.md)** — Barcha buyruqlar ro'yxati (Test, Start, Index).
+3. **Konfiguratsiya**:
+   `.env` faylini yarating va API kalitlarni kiriting:
+   ```env
+   TELEGRAM_BOT_TOKEN=...
+   GEMINI_API_KEYS=key1,key2,key3
+   ```
 
-### Tezkor boshlash (Lokal):
-1. `.env` faylini to'ldiring.
-2. `pip install -r requirements.txt` ni yurgizing.
-3. `python bot.py` orqali ishga tushiring.
+4. **Ishga tushirish**:
+   ```bash
+   nohup python3 watchdog.py > logs/watchdog.log 2>&1 &
+   ```
 
-## 🛠 Xavfsizlik va Nazorat
-- **Loglar:** `logs/bot.log` da barcha harakatlar (Signal yuborish, AI tahlili) muhrlanadi. Watchdog loglari esa `logs/watchdog.log` da.
-- **Restart:** `watchdog.py` bot o'chib qolsa, uni avtomatik qayta yoqadi.
-- **Audit:** `tests/trader_audit.py` orqali tizimning strategik sog'lig'ini tekshirish mumkin.
+## 🧪 Testlarni yurgizish
+Tizim barqarorligini tekshirish uchun:
+```bash
+python3 -m pytest tests/
+```
 
----
-*Ushbu loyiha 2026-yilning eng so'nggi AI yutuqlari asosida shakllantirilgan.*
+## 📜 Litsenziya
+Loyiha faqat o'quv va shaxsiy foydalanish uchun mo'ljallangan. Savdoda ehtiyot bo'ling!
