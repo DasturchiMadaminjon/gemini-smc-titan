@@ -1,34 +1,35 @@
-# Titan V27.2 SMC Architecture 🚀
+# TITAN V27.2 SMC — Tizim Arxitekturasi 🦾
 
-Titan V27.2 — bu Smart Money Concepts (SMC) tamoyillariga asoslangan, AI tomonidan tasdiqlanadigan professional savdo tizimi.
+## 1. Umumiy Arxitektura
+Titan V27.2 modulli va asinxron arxitekturaga ega bo'lib, Python 3.9+ va `asyncio` kutubxonasiga asoslangan. Tizim AWS EC2 muhitida 24/7 avtonom ishlashga mo'ljallangan.
 
-## 🏗 Tizim Tarkibi
+## 2. Asosiy Modullar
+- **`bot.py`**: Markaziy boshqaruvchi. Skanerlash sikli, Telegram interfeysi va boshqa modullarni bog'laydi.
+- **`core/indicator.py`**: Matematik mantiq. OHLCV ma'lumotlarini tahlil qilib, SMC signallarini (BOS, FVG, OB) generatsiya qiladi.
+- **`utils/ai_engine.py`**: Vision va Validation. Gemini API orqali signallarni vizual tahlil qiladi va tasdiqlaydi.
+- **`utils/exchange.py`**: Ma'lumotlar manbasi. `yfinance` orqali bloklanmagan holda ma'lumotlarni asinxron yuklaydi.
+- **`core/manager.py`**: Bitimlarni boshqarish. Risk management, position sizing va natijalarni nazorat qilish.
 
-### 1. Market Data Layer (yfinance)
-AWS EC2 IP-blokirovkalari sababli, tizim **yfinance** backend-ga o'tkazilgan. 
-- **Retries**: Ma'lumot olishda 3 marta qayta urinish (exponential backoff) mantiqi qo'shilgan.
-- **Accuracy**: XAU/USD (Gold) va boshqa instrumentlar tickerlarining mantiqiy diapazoni TDD orqali nazorat qilinadi.
+## 3. Asinxron Butunlik (Async Integrity) ⚡
+Tizimning barcha CPU-intensive va I/O amallari blocking bo'lmasligi shart:
+- Tarmoq so'rovlari (`yfinance`) alohida `run_in_executor` poolda bajariladi.
+- Grafik chizish (`matplotlib`) event loopni bloklamasligi uchun fonda ishlaydi.
+- Har bir modul `tests/test_async_integrity_tdd.py` orqali tekshiriladi.
 
-### 2. SMC Indicator Engine (`core/indicator.py`)
-- **SMC Setup**: BOS, CHoCH, OrderBlocks va Liquidity zonalarini aniqlaydi.
-- **Visualization**: `mplfinance` yordamida professional grafiklar yaratadi. `numpy.float64` tiplari bilan ishlashda 100% xavfsiz (Standard Python floats cast).
+## 4. TDD (Test-Driven Development) — Xavfsizlik Kamari 🛡
+Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
+1. **Unit Tests**: Alohida funksiyalarni tekshirish.
+2. **Integration Tests**: Modullararo aloqani tekshirish.
+3. **Async Integrity Tests**: Asinxron butunlikni tasdiqlash.
 
-### 3. AI Validation Layer (`utils/ai_engine.py`)
-- **Model**: Gemini 2.5 Flash (Vision + RAG).
-- **Security (Auto-Rotation)**: Agar bitta API kalit bloklansa (403 Leaked), tizim avtomatik ravishayda backup kalitlarga o'tadi.
-- **Token Optimization**: Xabarlar kesilib qolmasligi uchun `max_output_tokens=2048` qilib sozlangan.
+## 5. Xatoliklarga chidamlilik (Resilience)
+- **Watchdog**: Bot to'xtab qolsa, uni 30 soniya ichida qayta ishga tushiradi.
+- **AI Key Rotation**: 403 (Leaked) yoki 429 (Rate Limit) xatolarida avtomatik navbatdagi API kalitga o'tadi.
+- **Deduplication**: Bir xil signallar 30 daqiqa ichida qayta yuborilishi bloklanadi.
 
-### 4. Safety & TDD Layer (`tests/`)
-Loyiha **TDD (Test-Driven Development)** asosida barqarorlashtirilgan:
-- `test_collection_safety_tdd.py`: Kolleksiyalar (set vs list) bilan ishlashda fatal errorlarni oldini oladi.
-- `test_visualization_safety_tdd.py`: Grafik chizishda biblioteka mosligini tekshiradi.
-- `test_exchange_stability_tdd.py`: Ma'lumot provayderi ishonchliligini tasdiqlaydi.
-- `test_ai_key_rotation_tdd.py`: AI kalitlarining blokirovkalarga chidamliligini isbotlaydi.
-
-## 🛠 Deployment (AWS EC2)
-
-1. **Watchdog**: `watchdog.py` botni 24/7 nazorat qiladi va xatolik bo'lsa darhol qayta ishga tushiradi.
-2. **Logs**: `logs/watchdog.log` va `logs/bot.log` orqali real vaqtda monitoring qilinadi.
+## 6. Logging va Monitoring 🪵
+- Barcha amallar `logs/` papkasida qayd etiladi.
+- Har bir signal uchun unique Hash yaratilib, loglarda kuzatib boriladi.
 
 ---
-*Titan V27.2 - Barqarorlik va Professionalizm uchun yaratilgan.*
+*Titan V27.2 - Barqarorlik, Professionalizm va Yuqori Sifat uchun yaratilgan.*
