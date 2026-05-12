@@ -42,18 +42,28 @@ def test_forex_sl_formatting():
     print(f"DEBUG Forex Line: {line}")
 
 @pytest.mark.asyncio
-async def test_ai_truncation_config():
+async def test_ai_truncation_and_safety_config():
     """
-    TDD: AI Engine konfiguratsiyasida max_output_tokens va 
-    to'liq javob buyrug'i borligini tekshirish.
+    TDD: AI Engine konfiguratsiyasida max_output_tokens, 
+    to'liq javob buyrug'i ([TAMOM]) va xavfsizlik filtrlari 
+    to'g'ri sozlanganini tekshirish.
     """
     from utils.ai_engine import AIEngine
-    import os
     
-    # Fake API key bilan engine yaratish
+    # Engine yaratish
     engine = AIEngine("fake_key")
-    
-    # Biz get_analysis ichidagi generation_config ni mock orqali tekshirishimiz mumkin
-    # Lekin hozir personas dagi 'technical' instruksiyasini tekshiramiz
     persona = engine.personas.get("technical", "")
-    assert "oxirigacha" in persona.lower() or "yakunlab" in persona.lower()
+    
+    # 1. Instruksiyada TAMOM belgisi borligini tekshirish
+    # Biz AIEngine.get_analysis dagi full_instruction ni tekshirishimiz kerak
+    # Hozircha personas dagi 'technical' ni tekshiramiz
+    assert "yakunlang" in persona.lower() or "tugating" in persona.lower()
+    
+    # 2. Safety Settings mavjudligini tekshirish (Logika tekshiruvi)
+    # Biz utils/ai_engine.py dagi get_analysis metodini mock qilmasdan 
+    # to'g'ridan-to'g'ri kod strukturasini tahlil qilamiz.
+    import inspect
+    source = inspect.getsource(engine.get_analysis)
+    assert "BLOCK_NONE" in source, "Safety settings hali ham faol!"
+    assert "[TAMOM]" in source, "Completion marker ([TAMOM]) instruksiyada yo'q!"
+    assert "generate_content" in source, "Hamon chat sessiyasi ishlatilmoqda!"
