@@ -485,6 +485,11 @@ class GeminiBot:
                             sig_data = {
                                 'symbol': s,
                                 'direction': sig.direction,
+                                'entry': sig.entry,
+                                'sl': sig.sl,
+                                'tp1': sig.tp1,
+                                'tp2': sig.tp2,
+                                'tp3': sig.tp3,
                                 'quality': sig.quality,
                                 'reason': sig.reason,
                                 'time_utc': datetime.now(timezone.utc).strftime('%H:%M')
