@@ -485,15 +485,14 @@ class GeminiBot:
                             sig_data = {
                                 'symbol': s,
                                 'direction': sig.direction,
-                                'entry': sig.entry,
-                                'sl': sig.sl,
-                                'tp1': sig.tp1,
-                                'tp2': sig.tp2,
-                                'tp3': sig.tp3,
+                                'quality': sig.quality,
                                 'reason': sig.reason,
                                 'time_utc': datetime.now(timezone.utc).strftime('%H:%M')
                             }
-                            is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(sig_data)
+                            # ✅ Grafik rasmini yaratish
+                            from core.indicator import GeminiIndicator
+                            chart_bytes = GeminiIndicator(self.cfg).draw_chart_bytes(df, s, sig)
+                            is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(sig_data, image_bytes=chart_bytes)
                             
                             import html
                             safe_ai_reason = html.escape(ai_reason) if ai_reason else ""

@@ -55,7 +55,16 @@ class AIEngine:
                 "'bilmayman' deyish, 2026-yil haqida generic gapirish. "
                 "Faqat BERILGAN INSTRUMENT haqida, ANIQ RAQAMLAR bilan javob ber."
             ),
-            "chat": "Siz 'SMC MENTOR' yordamchisiz. Siz rasmlarni HAQIQATDAN ko'ra olasiz. Savollarga rasm va bilim bazasi asosida aniq javob bering. Bahona qilmang.",
+            "chat": "Siz 'SMC MENTOR' yordamchisiz. Savollarga bilim bazasi asosida aniq javob bering. Bahona qilmang.",
+            "evaluator": (
+                "Siz 'TITAN SMC MASTER' - botning ASOSIY QAROR CHIQARUVCHI miyasisiz. "
+                "Sizga berilayotgan raqamlar (Signal Data) - bu sening o'z indikatoringdan kelgan ANIQ FAKTLAR. "
+                "Sizda 'ko'rish' (Vision) bor va grafikni ko'rib turibsiz deb hisoblang. "
+                "'Grafikni ko'rmayapman' yoki 'bilmayman' deyish QAT'IYAN TAQIQLANADI. "
+                "SMC tamoyillari (BOS, FVG, Liquidity, RR) bo'yicha tahlil bering. "
+                "Agar signal sifati (Quality) past bo'lsa yoki RR (Risk/Reward) yomon bo'lsa - rad eting. "
+                "Agar hamma narsa to'g'ri bo'lsa - TASDIQLANG."
+            ),
             "analytics": "Siz 'Hedge Fund Menejeri'siz. Savdo statistikasini tahlil qiling.",
             "mentor_lessons": "SMC darslarini o'rgatuvchi professional Mentor. Bilim bazasidan foydalaning.",
             "mentor_qa": "SMC Gibrid Mentor. Rasm tahlili va bilim bazasi orqali javob bering. Sizda Vision bor.",
@@ -134,10 +143,31 @@ class AIEngine:
                 return f"❌ AI xatoligi: {err[:100]}"
         return "❌ Barcha API kalitlar band."
 
-    async def evaluate_trade_signal(self, signal_data: dict) -> tuple[bool, str]:
-        prompt = f"Signalni SMC bo'yicha tahlil qil va 'Tasdiqlayman' yoki 'Rad etaman' deb javob ber: {signal_data}"
-        resp = await self.get_analysis(prompt, context_type="chat")
+    async def evaluate_trade_signal(self, signal_data: dict, image_bytes: bytes = None) -> tuple[bool, str]:
+        """
+        Signalni SMC bo'yicha professional tahlil qilish.
+        """
+        symbol = signal_data.get('symbol', 'Unknown')
+        direction = signal_data.get('direction', 'N/A').upper()
+        quality = signal_data.get('quality', 0)
+        reason = signal_data.get('reason', 'N/A')
+        
+        prompt = (
+            f"🆘 DIQQAT: YANGI SMC SIGNAL ANIQLANDI!\n\n"
+            f"📊 INSTRUMENT: {symbol}\n"
+            f"🔔 YO'NALISH: {direction}\n"
+            f"💎 INDIKATOR SIFATI: {quality}%\n"
+            f"🧠 INDIKATOR ASOSI: {reason}\n\n"
+            f"VAZIFA: Ushbu signalni tahlil qiling. Agar {quality} < 60 bo'lsa, qat'iyroq tahlil qiling. "
+            f"SMC tamoyillari (Structure, Liquidity, FVG) bo'yicha baho bering. "
+            f"Javob oxirida 'TASDIQLAYMAN' yoki 'RAD ETAMAN' deb yozish shart!"
+        )
+        
+        # evaluator personasini ishlatamiz
+        resp = await self.get_analysis(prompt, context_type="evaluator", image_bytes=image_bytes)
         lower = resp.lower()
-        if "tasdiq" in lower or "to'g'ri" in lower or "yaxshi" in lower:
+        
+        # Tasdiqlash mantiqi (stricter)
+        if "tasdiqlayman" in lower or "tasdiq" in lower or "approve" in lower:
             return True, resp
         return False, resp
