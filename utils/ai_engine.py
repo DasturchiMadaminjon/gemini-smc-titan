@@ -109,15 +109,18 @@ class AIEngine:
             try:
                 # 1. Google Search bilan urinib ko'rish
                 # SDK muvofiqligi uchun eng sodda va xavfsiz konfiguratsiya
+                # Qat'iy konfiguratsiya: max_output_tokens=2048 va temperature=0.4 (barqarorlik uchun)
                 config = types.GenerateContentConfig(
-                    system_instruction=full_instruction,
-                    temperature=0.7,
+                    system_instruction=full_instruction + " MUHIM: Har doim javobni oxirigacha, to'liq yakunlab yozing.",
+                    temperature=0.4,
                     max_output_tokens=2048,
                     tools=[types.Tool(google_search=types.GoogleSearch())],
                 )
 
                 chat = self.client.chats.create(model=self.model_name, config=config)
-                response = await asyncio.to_thread(chat.send_message, contents)
+                response = await asyncio.to_thread(chat.send_message, contents, config=config)
+                if not response.text or len(response.text) < 10:
+                    raise Exception("AI javobi juda qisqa yoki bo'sh")
                 return response.text
             except Exception as e:
                 err = str(e).upper()

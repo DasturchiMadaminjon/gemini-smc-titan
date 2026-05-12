@@ -21,9 +21,11 @@ INSTRUMENT_SPECS = {
     'USD/CAD':  {'pip_size': 0.0001, 'pip_value_per_lot': 10.0, 'min_lot': 0.01, 'unit': 'Lot'},
     'USD/JPY':  {'pip_size': 0.01,   'pip_value_per_lot': 9.1,  'min_lot': 0.01, 'unit': 'Lot'},
     # Crypto (to'g'ridan-to'g'ri)
-    'BTC/USDT': {'pip_size': 1.0, 'pip_value_per_lot': 1.0, 'min_lot': 0.001, 'unit': 'BTC'},
-    'ETH/USDT': {'pip_size': 1.0, 'pip_value_per_lot': 1.0, 'min_lot': 0.01,  'unit': 'ETH'},
-    'XRP/USDT': {'pip_size': 0.0001, 'pip_value_per_lot': 1.0, 'min_lot': 1.0, 'unit': 'XRP'},
+    'BTC/USDT': {'pip_size': 1.0, 'pip_value_per_lot': 1.0, 'min_lot': 0.001, 'unit': 'BTC', 'is_crypto': True},
+    'ETH/USDT': {'pip_size': 1.0, 'pip_value_per_lot': 1.0, 'min_lot': 0.01,  'unit': 'ETH', 'is_crypto': True},
+    'XRP/USDT': {'pip_size': 0.0001, 'pip_value_per_lot': 1.0, 'min_lot': 1.0, 'unit': 'XRP', 'is_crypto': True},
+    'SOL/USDT': {'pip_size': 0.01, 'pip_value_per_lot': 1.0, 'min_lot': 0.1, 'unit': 'SOL', 'is_crypto': True},
+    'AVAX/USD': {'pip_size': 0.01, 'pip_value_per_lot': 1.0, 'min_lot': 0.1, 'unit': 'AVAX', 'is_crypto': True},
 }
 
 def calculate_position(balance: float, risk_pct: float,
@@ -60,8 +62,11 @@ def calculate_position(balance: float, risk_pct: float,
     return {
         'risk_dollar': risk_dollar,
         'sl_pips':     round(sl_pips, 1),
+        'sl_delta':    round(sl_distance, 4),
+        'sl_perc':     round((sl_distance / entry) * 100, 2),
         'lot_size':    lot_size,
         'unit':        spec['unit'],
+        'is_crypto':   spec.get('is_crypto', False)
     }
 
 
@@ -76,10 +81,16 @@ def format_position_line(balance: float, risk_pct: float,
     rr1 = abs(tp1 - entry) / abs(sl - entry) if abs(sl - entry) else 0
     rr2 = abs(tp2 - entry) / abs(sl - entry) if abs(sl - entry) else 0
 
+    # Kripto uchun pips o'rniga delta va foizni ko'rsatamiz
+    if d['is_crypto']:
+        sl_info = f"<code>${d['sl_delta']} ({d['sl_perc']}%)</code>"
+    else:
+        sl_info = f"<code>{d['sl_pips']:.0f} pip</code>"
+
     return (
         f"💰 <b>Position Sizing:</b>\n"
         f"   ├ Risk: <code>${d['risk_dollar']:.0f} ({risk_pct}%)</code>\n"
-        f"   ├ SL masofa: <code>{d['sl_pips']:.0f} pip</code>\n"
+        f"   ├ SL masofa: {sl_info}\n"
         f"   ├ Hajm: <code>{d['lot_size']} {d['unit']}</code>\n"
         f"   └ R:R → TP1: <code>1:{rr1:.1f}</code> | TP2: <code>1:{rr2:.1f}</code>"
     )
