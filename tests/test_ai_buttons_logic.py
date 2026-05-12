@@ -69,12 +69,12 @@ class TestAIButtonsLogic:
         # Mocking genai client
         mock_client = mock_client_class.return_value
         
-        # Mock chat and response
-        mock_chat = MagicMock()
-        mock_client.chats.create.return_value = mock_chat
+        # Mock chat and response -> NOW USING models.generate_content
+        mock_models = MagicMock()
+        mock_client.models = mock_models
         
         # Side effect: first call fails, second succeeds
-        mock_chat.send_message.side_effect = [
+        mock_models.generate_content.side_effect = [
             Exception("429 Resource exhausted"),
             MagicMock(text="Key rotated success")
         ]
