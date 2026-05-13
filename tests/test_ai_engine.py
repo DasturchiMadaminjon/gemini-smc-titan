@@ -21,3 +21,38 @@ async def test_ai_signal_review():
         assert "AI Bahosi" in result
         assert "90/100" in result
         print("\n✅ AI Signal Review testi o'tdi!")
+
+@pytest.mark.asyncio
+async def test_ai_incomplete_response_handling():
+    """TDD: AI chala javob qaytarsa, TAMOM so'zi orqali aniqlash va qayta ishlash"""
+    engine = AIEngine(["fake_key"])
+    
+    responses = [
+        "Javobning birinchi qismi. Chala qoldi...",
+        "Javobning to'liq qismi. [TAMOM]"
+    ]
+    
+    call_count = [0]
+    
+    async def mock_generate_content(*args, **kwargs):
+        if call_count[0] < len(responses):
+            t = responses[call_count[0]]
+        else:
+            t = responses[-1]
+        call_count[0] += 1
+        
+        class DummyResponse:
+            @property
+            def text(self):
+                return t
+        return DummyResponse()
+    
+    with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_thread:
+        mock_thread.side_effect = mock_generate_content
+        
+        # get_analysis ni chaqiramiz
+        result = await engine.get_analysis("test prompt")
+        
+        assert call_count[0] == 2, "AI Engine chala javobni sezib, API ga qayta murojaat qilmadi!"
+        assert "[TAMOM]" not in result, "Yakuniy javobdan TAMOM so'zi olib tashlanmadi!"
+        assert "Javobning to'liq qismi" in result, "Yakuniy to'liq javob qaytarilmadi!"

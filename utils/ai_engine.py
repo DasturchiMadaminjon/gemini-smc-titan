@@ -122,17 +122,32 @@ class AIEngine:
                     ]
                 )
 
-                # Chat sessiyasidan ko'ra generate_content ishonchliroq (stateless)
-                response = await asyncio.to_thread(
-                    self.client.models.generate_content,
-                    model=self.model_name,
-                    contents=contents,
-                    config=config
-                )
-                
-                if not response.text:
-                    raise Exception("AI bo'sh javob qaytardi")
-                return response.text
+                # Chala xabarlarni tutib olish va qayta ishlash uchun ichki loop
+                max_inner_retries = 3
+                for inner_attempt in range(max_inner_retries):
+                    response = await asyncio.to_thread(
+                        self.client.models.generate_content,
+                        model=self.model_name,
+                        contents=contents,
+                        config=config
+                    )
+                    
+                    if not response.text:
+                        if inner_attempt == max_inner_retries - 1:
+                            raise Exception("AI bo'sh javob qaytardi")
+                        continue
+                        
+                    # Agar javobda TAMOM so'zi bo'lmasa, demak u chala qolgan
+                    if "[TAMOM]" not in response.text:
+                        if inner_attempt < max_inner_retries - 1:
+                            logger.warning("AI javobi chala qoldi ([TAMOM] yo'q). Qayta urinilmoqda...")
+                            await asyncio.sleep(1)
+                            continue
+                        else:
+                            # Agar oxirgi urinishda ham chala bo'lsa, borini qaytaramiz (lekin xatolikni aytish mumkin)
+                            return response.text.replace("[TAMOM]", "").strip()
+
+                    return response.text.replace("[TAMOM]", "").strip()
             except Exception as e:
                 err = str(e).upper()
                 
