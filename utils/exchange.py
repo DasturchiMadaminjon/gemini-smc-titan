@@ -71,13 +71,13 @@ TF_MAP = {
 
 # Har bir timeframe uchun qancha kun tarix olish kerak (limit ni qoplash uchun)
 PERIOD_DAYS = {
-    "1m":  "2d",
-    "5m":  "5d",
-    "15m": "8d",
-    "30m": "15d",
-    "1h":  "25d",
-    "4h":  "60d",
-    "1d":  "365d",
+    "1m":  "7d",
+    "5m":  "60d",
+    "15m": "60d",
+    "30m": "60d",
+    "1h":  "730d",
+    "4h":  "730d",
+    "1d":  "max",
 }
 
 
