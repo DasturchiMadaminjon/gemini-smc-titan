@@ -5,6 +5,8 @@ Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, Gemini AI bilan
 ## ✨ Xususiyatlari
 - **Professional SMC Tahlil**: BOS, OrderBlock, FVG va Liquidity.
 - **AI Validation**: Gemini Vision orqali grafikni "ko'rib" qaror qabul qilish.
+- **Resilient Messaging**: "Smart Chunking" va "HTML Sanitization" orqali xabarlarning uzilishlarsiz yetib borishi.
+- **AI Self-Healing**: Chala qolgan AI tahlillarini avtomatik qayta tiklash.
 - **24/7 Avtonomiya**: AWS EC2 uchun optimallashtirilgan Watchdog tizimi.
 - **TDD Safety**: 100% testlardan o'tgan barqaror kod bazasi.
 

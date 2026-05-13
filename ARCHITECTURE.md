@@ -24,8 +24,10 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 
 ## 5. Xatoliklarga chidamlilik (Resilience)
 - **Watchdog**: Bot to'xtab qolsa, uni 30 soniya ichida qayta ishga tushiradi.
-- **AI Key Rotation**: 403 (Leaked) yoki 429 (Rate Limit) xatolarida avtomatik navbatdagi API kalitga o'tadi.
 - **Deduplication**: Bir xil signallar 30 daqiqa ichida qayta yuborilishi bloklanadi.
+- **Smart Chunking**: Telegram'ning 4000 belgilik limiti uchun aqlli (abzaslar bo'yicha) bo'laklash tizimi.
+- **HTML Sanitization**: AI javoblaridagi maxsus belgilarni (&, <, >) Telegram HTML parseri uchun avtomatik escape qilish.
+- **AI Self-Healing**: AI javobi chala qolsa (missing [TAMOM]), uni avtomatik aniqlash va qayta generatsiya qilish.
 
 ## 6. Logging va Monitoring 🪵
 - Barcha amallar `logs/` papkasida qayd etiladi.
