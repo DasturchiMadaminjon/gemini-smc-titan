@@ -59,8 +59,22 @@ class TelegramNotifier:
         all_success = True
         for c in cids:
             sent_this = False
-            for i in range(0, len(str(text)), 4000):
-                chunk = text[i:i+4000]
+            
+            # SMART CHUNKING
+            text_str = str(text)
+            chunks = []
+            while len(text_str) > 4000:
+                split_idx = text_str.rfind('\n\n', 0, 4000)
+                if split_idx == -1:
+                    split_idx = text_str.rfind('\n', 0, 4000)
+                if split_idx == -1:
+                    split_idx = 4000
+                chunks.append(text_str[:split_idx])
+                text_str = text_str[split_idx:].strip()
+            if text_str:
+                chunks.append(text_str)
+                
+            for i, chunk in enumerate(chunks):
                 data = {'chat_id': c, 'text': chunk, 'parse_mode': 'HTML'}
                 if kb and i == 0: data['reply_markup'] = kb
                 
