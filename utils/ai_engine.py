@@ -122,32 +122,39 @@ class AIEngine:
                     ]
                 )
 
-                # Chala xabarlarni tutib olish va qayta ishlash uchun ichki loop
+                # Chala xabarlarni tutib olish va davom ettirish uchun mantiq
+                accumulated_text = ""
                 max_inner_retries = 3
+                
                 for inner_attempt in range(max_inner_retries):
+                    # Agar bu davom ettirish bo'lsa, kontekstga oldingi qismni qo'shamiz
+                    current_contents = contents.copy()
+                    if accumulated_text:
+                        current_contents.append(f"Oldingi qism:\n{accumulated_text}\n\nDavom eting:")
+
                     response = await asyncio.to_thread(
                         self.client.models.generate_content,
                         model=self.model_name,
-                        contents=contents,
+                        contents=current_contents,
                         config=config
                     )
                     
                     if not response.text:
-                        if inner_attempt == max_inner_retries - 1:
-                            raise Exception("AI bo'sh javob qaytardi")
-                        continue
-                        
-                    # Agar javobda TAMOM so'zi bo'lmasa, demak u chala qolgan
-                    if "[TAMOM]" not in response.text:
-                        if inner_attempt < max_inner_retries - 1:
-                            logger.warning("AI javobi chala qoldi ([TAMOM] yo'q). Qayta urinilmoqda...")
-                            await asyncio.sleep(1)
-                            continue
-                        else:
-                            # Agar oxirgi urinishda ham chala bo'lsa, borini qaytaramiz
-                            return response.text.rstrip().removesuffix("[TAMOM]").strip()
+                        break
+                    
+                    new_text = response.text
+                    accumulated_text += new_text
+                    
+                    # TAMOM belgisi kelganini tekshirish
+                    if "[TAMOM]" in accumulated_text.upper():
+                        break
+                    
+                    logger.info(f"AI javobi chala (Attempt {inner_attempt+1}). Davomini so'raymiz...")
+                    await asyncio.sleep(0.5)
 
-                    return response.text.rstrip().removesuffix("[TAMOM]").strip()
+                # Yakuniy tozalash
+                final_res = accumulated_text.replace("[TAMOM]", "").replace("[tamom]", "").strip()
+                return final_res
             except Exception as e:
                 err = str(e).upper()
                 

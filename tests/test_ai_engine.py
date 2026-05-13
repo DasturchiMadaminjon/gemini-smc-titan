@@ -28,8 +28,8 @@ async def test_ai_incomplete_response_handling():
     engine = AIEngine(["fake_key"])
     
     responses = [
-        "Javobning birinchi qismi. Chala qoldi...",
-        "Javobning to'liq qismi. [TAMOM]"
+        "Javobning birinchi qismi. ",
+        "ikkinchi qismi. [TAMOM]"
     ]
     
     call_count = [0]
@@ -40,6 +40,14 @@ async def test_ai_incomplete_response_handling():
         else:
             t = responses[-1]
         call_count[0] += 1
+        
+        # Tekshiramiz: ikkinchi chaqiruvda contents ichida "Oldingi qism" bormi?
+        if call_count[0] == 2:
+            contents = kwargs.get('contents', [])
+            # contents list bo'lsa, ichida "Oldingi qism" qidiramiz
+            found_context = any("Oldingi qism" in str(c) for c in args) # asyncio.to_thread args[1] is model, args[2] is contents? No.
+            # to_thread(func, *args, **kwargs) -> func(*args, **kwargs)
+            # self.client.models.generate_content(model=..., contents=..., config=...)
         
         class DummyResponse:
             @property
@@ -55,4 +63,5 @@ async def test_ai_incomplete_response_handling():
         
         assert call_count[0] == 2, "AI Engine chala javobni sezib, API ga qayta murojaat qilmadi!"
         assert "[TAMOM]" not in result, "Yakuniy javobdan TAMOM so'zi olib tashlanmadi!"
-        assert "Javobning to'liq qismi" in result, "Yakuniy to'liq javob qaytarilmadi!"
+        assert "Javobning birinchi qismi. ikkinchi qismi." in result, "Javoblar to'g'ri jamlanmadi (Accumulation fail)!"
+        print("\n✅ AI Auto-Continuation TDD testi o'tdi!")

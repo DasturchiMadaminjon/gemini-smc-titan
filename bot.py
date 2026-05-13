@@ -22,7 +22,7 @@ from utils.rag_engine import RAGEngine
 from utils.web_search import web_search
 
 warnings.filterwarnings("ignore")
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class GeminiBot:
