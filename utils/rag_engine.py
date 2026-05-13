@@ -26,9 +26,9 @@ class RAGEngine:
         
         if not self.keys:
             logger.error("RAG uchun API kalit topilmadi! .env faylini tekshiring.")
-            self.client = None
-        else:
-            self.client = genai.Client(api_key=self.keys[0])
+        
+        self.current_key_index = 0
+        self.setup_client()
         
         os.makedirs("vector_db", exist_ok=True)
         os.makedirs(self.k_base_dir, exist_ok=True)
@@ -36,6 +36,22 @@ class RAGEngine:
         self.documents = []
         self.embeddings = []
         self.load_index()
+
+    def setup_client(self):
+        """SDK Clientni joriy kalit bilan sozlash"""
+        if self.keys:
+            self.client = genai.Client(api_key=self.keys[self.current_key_index])
+        else:
+            self.client = None
+
+    def _rotate_key(self):
+        """Navbatdagi API kalitga o'tish"""
+        if len(self.keys) > 1:
+            self.current_key_index = (self.current_key_index + 1) % len(self.keys)
+            self.setup_client()
+            logger.info(f"RAG API key rotated → index {self.current_key_index}")
+            return True
+        return False
 
     def load_index(self):
         """Lokal fayldan vektorlarni va matnlarni yuklash"""
@@ -185,27 +201,32 @@ class RAGEngine:
         if not self.embeddings: 
             return context
 
-        try:
-            # Muhim: Model nomi aniq gemini-embedding-001 bo'lishi shart
-            res = self.client.models.embed_content(
-                model="models/gemini-embedding-001",
-                contents=query,
-                config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
-            )
-            query_emb = np.array(res.embeddings[0].values)
-            
-            similarities = []
-            for i, emb in enumerate(self.embeddings):
-                # Cosine similarity
-                sim = np.dot(query_emb, emb) / (np.linalg.norm(query_emb) * np.linalg.norm(emb) + 1e-9)
-                similarities.append((sim, self.documents[i]))
-            
-            similarities.sort(key=lambda x: x[0], reverse=True)
-            search_results = "\n...\n".join([doc for sim, doc in similarities[:top_k]])
-            return context + search_results
-        except Exception as e:
-            logger.error(f"Search error (RAG): {e}")
-            return context # Xato bo'lsa ham kamida fayllar ro'yxatini qaytarsin
+        for attempt in range(len(self.keys) or 1):
+            try:
+                # Muhim: Model nomi aniq gemini-embedding-001 bo'lishi shart
+                res = self.client.models.embed_content(
+                    model="models/gemini-embedding-001",
+                    contents=query,
+                    config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+                )
+                query_emb = np.array(res.embeddings[0].values)
+                
+                similarities = []
+                for i, emb in enumerate(self.embeddings):
+                    # Cosine similarity
+                    sim = np.dot(query_emb, emb) / (np.linalg.norm(query_emb) * np.linalg.norm(emb) + 1e-9)
+                    similarities.append((sim, self.documents[i]))
+                
+                similarities.sort(key=lambda x: x[0], reverse=True)
+                search_results = "\n...\n".join([doc for sim, doc in similarities[:top_k]])
+                return context + search_results
+            except Exception as e:
+                err = str(e).upper()
+                if ("403" in err or "PERMISSION_DENIED" in err or "429" in err or "EXHAUSTED" in err) and self._rotate_key():
+                    logger.warning(f"RAG search error, rotating key: {err[:50]}")
+                    continue
+                logger.error(f"Search error (RAG): {e}")
+                return context # Xato bo'lsa ham kamida fayllar ro'yxatini qaytarsin
 
     def get_kb_stats(self):
         """AWS va lokal uchun statistika"""
