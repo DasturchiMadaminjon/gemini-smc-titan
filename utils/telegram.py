@@ -88,7 +88,9 @@ class TelegramNotifier:
                                 break
                             else:
                                 txt = await r.text()
-                                print(f"[SEND FAIL] Status {r.status}: {txt}", flush=True)
+                                print(f"[SEND FAIL] Chunk {i+1}/{len(chunks)} To {c}. Status {r.status}: {txt}", flush=True)
+                                if "can't parse entities" in txt:
+                                    print(f"⚠️ HTML Parser Error on chunk: {chunk[:100]}...", flush=True)
                                 if r.status in (502, 503, 504): await asyncio.sleep(1.5)
                                 else: break
                     except Exception as e:

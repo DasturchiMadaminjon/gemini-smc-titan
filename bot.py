@@ -259,8 +259,9 @@ class GeminiBot:
                 self.db.add_chat_message(uid, 'user', user_msg)
 
         # ✅ Xatolik oldini olish: HTML parser xatosi (Telegram) bermasligi uchun
-        if t == 'chat' and res and '❌' not in res:
-            res = res.replace('<', '&lt;').replace('>', '&gt;')
+        if res and '❌' not in res:
+            # Telegram HTML qoidalari: &, <, > belgilari escape qilinishi shart
+            res = res.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
         await self.telegram.send(f"🤖 <b>AI {t.upper()} TAHLILI ({s}):</b>\n\n{res}", cid=uid)
 

@@ -144,10 +144,10 @@ class AIEngine:
                             await asyncio.sleep(1)
                             continue
                         else:
-                            # Agar oxirgi urinishda ham chala bo'lsa, borini qaytaramiz (lekin xatolikni aytish mumkin)
-                            return response.text.replace("[TAMOM]", "").strip()
+                            # Agar oxirgi urinishda ham chala bo'lsa, borini qaytaramiz
+                            return response.text.rstrip().removesuffix("[TAMOM]").strip()
 
-                    return response.text.replace("[TAMOM]", "").strip()
+                    return response.text.rstrip().removesuffix("[TAMOM]").strip()
             except Exception as e:
                 err = str(e).upper()
                 
