@@ -158,6 +158,7 @@ class GeminiBot:
                         img = await generate_chart_buffer(df)
                     # AI tahlili uchun narxlarni ham matn ko'rinishida qo'shamiz
                     ohlc_text = df.tail(48).to_string()
+                    print(f"[DEBUG] {s} uchun OHLC jadvali AI promptiga muvaffaqiyatli qo'shildi ({len(ohlc_text)} bayt)")
                     req['text'] = f"{req.get('text', '')}\n\n[SISTEMA MA'LUMOTI: Hozirgi sana va vaqt: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. Foydalanuvchi taqdim etgan signal natijasini aniqlashingiz uchun, men sizga {s} ning oxirgi 48 soatlik haqiqiy narxlarini (OHLC 1H) taqdim etaman. Ushu ma'lumotlarga qarab xulosa qiling. 'Menda narxlar yo'q' yoki 'kelajakni bilmayman' deb aytishingiz qat'iyan taqiqlanadi, chunki narxlar mana shu yerda keltirilgan!]\n\nNARXLAR JADVALI (OHLC):\n{ohlc_text}"
             except Exception as e:
                 logger.error(f"DEBUG: Avto-chart xatosi: {e}")

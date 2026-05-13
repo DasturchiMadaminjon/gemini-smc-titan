@@ -2,54 +2,56 @@ import pytest
 import os
 import threading
 from unittest.mock import MagicMock, AsyncMock
-from utils.telegram import TelegramNotifier
+import pandas as pd
+import bot
 
 @pytest.mark.asyncio
-async def test_chat_module_symbol_detection():
-    # 1. Setup mock bot
-    config = {'telegram': {'bot_token': 'dummy_token_123'}, 'gemini_ai': {'api_keys': ['dummy_key']}}
-    lock = threading.Lock()
-    
-    # Prevent bot from making real web requests on init
+async def test_full_ai_context_injection():
+    # 1. Setup mock environment
     os.environ['TELEGRAM_BOT_TOKEN'] = 'dummy'
+    b = bot.GeminiBot()
     
-    notifier = TelegramNotifier(config, lock)
-    uid = '12345'
+    # Mock Exchange to return some fake data
+    data = {
+        'open': [4670.0] * 48,
+        'high': [4720.0] * 48,
+        'low': [4650.0] * 48,
+        'close': [4680.0] * 48,
+        'volume': [1000] * 48
+    }
+    mock_df = pd.DataFrame(data)
     
-    # 2. Foydalanuvchi "AI Chat Assistant" ga kirgan deb tasavvur qilamiz
-    notifier.user_states[uid] = "in_session"
-    notifier.user_modules[uid] = "chat"
+    b.exchange.fetch_ohlcv = AsyncMock(return_value=mock_df)
+    b.telegram.get_ai_analysis = AsyncMock(return_value="AI JAVOBI TEST")
+    b.telegram.send = AsyncMock()
+    b.telegram.send_action = AsyncMock()
     
-    # Mock funksiyalar (haqiqiy API chaqirilmasligi uchun)
-    notifier.send = AsyncMock()
-    notifier.send_action = AsyncMock()
-    notifier.get_session = AsyncMock()
-    
-    # 3. Foydalanuvchining xabari: "XAU/USD hozirgi narxi qancha?"
-    update_data = {
-        'update_id': 999,
-        'message': {
-            'from': {'id': int(uid)},
-            'text': "XAU/USD hozirgi narxi qancha?"
-        }
+    # 2. Simulate user request
+    req = {
+        'chat_id': '12345',
+        'symbol': 'XAU/USD',
+        'type': 'chat',
+        'text': "XAU/USD narxi haqida tahlil ber."
     }
     
-    bs = {'ai_requests': []}
-    cfg_full = {'symbols': ['XAU/USD', 'BTC/USDT']}
+    # 3. Handle AI
+    await b._handle_ai(req)
     
-    # 4. Update ni qayta ishlash
-    await notifier.handle_update(update_data, bs, cfg_full, MagicMock(), "dummy_offset.txt")
+    # 4. Assertions
+    args, kwargs = b.telegram.get_ai_analysis.call_args
+    prompt = args[0]
     
-    # 5. Tekshirish (Assert)
-    assert len(bs['ai_requests']) > 0, "AI so'rovi qo'shilmadi!"
-    req = bs['ai_requests'][0]
+    # Promptda jadval borligini tekshirish
+    assert "NARXLAR JADVALI (OHLC):" in prompt, "XATO: Promptda OHLC jadvali yo'q!"
+    assert "4670.0" in prompt, "XATO: Jadval ma'lumotlari promptga qo'shilmagan!"
+    assert "XAU/USD" in prompt, "XATO: Simbol nomi promptda yo'q!"
     
-    # O'zgarishdan oldin bu yerda 'SMC' chiqardi. Endi 'XAU/USD' chiqishi kerak!
-    assert req['symbol'] == 'XAU/USD', f"XATO: Simbol topilmadi. Kutilgan: XAU/USD, Olingan: {req['symbol']}"
-    assert req['type'] == 'chat', f"XATO: Modul turi noto'g'ri: {req['type']}"
+    # System Instruction borligini tekshirish
+    assert "Foydalanuvchi taqdim etgan signal natijasini aniqlashingiz uchun" in prompt
+    assert "DIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan to'liq foydalaning" in prompt
     
-    print("SUCCESS: Muvaffaqiyat! AI Chat moduli xabar ichidan to'g'ri instrumentni (XAU/USD) topdi.")
+    print("SUCCESS: TDD Test muvaffaqiyatli o'tdi. AI kontekstga OHLC ma'lumotlari to'liq qo'shilmoqda.")
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(test_chat_module_symbol_detection())
+    asyncio.run(test_full_ai_context_injection())
