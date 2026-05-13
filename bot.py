@@ -149,16 +149,16 @@ class GeminiBot:
                 logger.warning(f"Price fetch fallback error ({s}): {_pe}")
         img = req.get('image')
         
-        # Avtomatik Chart generatsiyasi — Technical va Scalping uchun AI ko'zi
-        if not img and t in ['technical', 'scalping']:
+        # Avtomatik Chart generatsiyasi va Kontekst yig'ish
+        if t in ['technical', 'scalping', 'chat', 'mentor_qa', 'fundamental', 'mentor_lessons', 'mentor_live_examples'] and s not in ('SMC', 'ALL'):
             try:
-                # SPREAD: fetch_ohlcv asinxron, uni to'g'ridan-to'g'ri await qilish kerak
-                df = await self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '15m'), limit=100)
+                df = await self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '1h'), limit=24) # Oxirgi 24 soat
                 if df is not None and not df.empty:
-                    img = await generate_chart_buffer(df)
+                    if not img and t in ['technical', 'scalping']:
+                        img = await generate_chart_buffer(df)
                     # AI tahlili uchun narxlarni ham matn ko'rinishida qo'shamiz
-                    ohlc_text = df.tail(10).to_string()
-                    req['text'] = f"{req.get('text', '')}\n\nOHLC DATA (Last 10 candles):\n{ohlc_text}"
+                    ohlc_text = df.tail(24).to_string()
+                    req['text'] = f"{req.get('text', '')}\n\n[SISTEMA: Hozirgi sana: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. {s} uchun oxirgi 24 soatlik OHLC narxlar (1H)]:\n{ohlc_text}"
             except Exception as e:
                 logger.error(f"DEBUG: Avto-chart xatosi: {e}")
 
@@ -206,11 +206,11 @@ class GeminiBot:
             'analytics':   f"{prompt_text if t=='analytics' else ''}",
             'technical':   f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida TO'LIQ texnik tahlil ber. Grafikdagi zonalarni va OHLC ma'lumotlarini izohla.",
             'scalping':    f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
-            'fundamental': f"Instrument: {s} | Joriy narx: {p}{news_context}\n{web_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozir 2026-yil, senga berilgan ma'lumotlar real vaqtdagi ma'lumotlardir.",
-            'chat':        (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
-            'mentor_lessons':       (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}",
-            'mentor_qa':            (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
-            'mentor_live_examples': (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}"
+            'fundamental': f"Instrument: {s} | Joriy narx: {p}{news_context}\n{web_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozirgi sana {datetime.now().strftime('%Y-%m-%d %H:%M')}, ma'lumotlar real vaqtdagidir.",
+            'chat':        f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
+            'mentor_lessons':       f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}",
+            'mentor_qa':            f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
+            'mentor_live_examples': f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}"
         }
         prompt = prompts.get(t, prompts['technical'])
 

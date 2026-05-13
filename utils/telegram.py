@@ -717,16 +717,15 @@ class TelegramNotifier:
 
                 user_text = t or m.get('caption', '') or "Ushbu rasmni tahlil qiling."
                 
-                # Fundamental moduli uchun user matnidan symbol aniqlash
                 module_type = self.user_modules.get(uid, 'mentor_qa')
                 detected_symbol = 'SMC'
-                if module_type == 'fundamental' and user_text:
+                if user_text:
                     _SYMBOL_HINTS = {
-                        'gold': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD',
-                        'silver': 'XAG/USD', 'xag': 'XAG/USD', 'kumush': 'XAG/USD',
-                        'btc': 'BTC/USDT', 'bitcoin': 'BTC/USDT',
-                        'eth': 'ETH/USDT', 'ethereum': 'ETH/USDT', 'efir': 'ETH/USDT',
-                        'eur': 'EUR/USD', 'gbp': 'GBP/USD',
+                        'gold': 'XAU/USD', 'xau/usd': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD',
+                        'silver': 'XAG/USD', 'xag/usd': 'XAG/USD', 'xag': 'XAG/USD', 'kumush': 'XAG/USD',
+                        'btc': 'BTC/USDT', 'btc/usdt': 'BTC/USDT', 'bitcoin': 'BTC/USDT',
+                        'eth': 'ETH/USDT', 'eth/usdt': 'ETH/USDT', 'ethereum': 'ETH/USDT', 'efir': 'ETH/USDT',
+                        'eur': 'EUR/USD', 'eur/usd': 'EUR/USD', 'gbp': 'GBP/USD', 'gbp/usd': 'GBP/USD',
                         'dxy': 'DXY', 'dollar': 'DXY',
                         'oil': 'OIL/USD', 'neft': 'OIL/USD',
                         'nasdaq': 'NASDAQ', 'sp500': 'S&P500',
