@@ -152,13 +152,13 @@ class GeminiBot:
         # Avtomatik Chart generatsiyasi va Kontekst yig'ish
         if t in ['technical', 'scalping', 'chat', 'mentor_qa', 'fundamental', 'mentor_lessons', 'mentor_live_examples'] and s not in ('SMC', 'ALL'):
             try:
-                df = await self.exchange.fetch_ohlcv(s, self.cfg.get('timeframe', '1h'), limit=24) # Oxirgi 24 soat
+                df = await self.exchange.fetch_ohlcv(s, '1h', limit=48) # Oxirgi 48 soat (2 kun)
                 if df is not None and not df.empty:
                     if not img and t in ['technical', 'scalping']:
                         img = await generate_chart_buffer(df)
                     # AI tahlili uchun narxlarni ham matn ko'rinishida qo'shamiz
-                    ohlc_text = df.tail(24).to_string()
-                    req['text'] = f"{req.get('text', '')}\n\n[SISTEMA MA'LUMOTI: Hozirgi sana va vaqt: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. Foydalanuvchi taqdim etgan signal natijasini aniqlashingiz uchun, men sizga {s} ning oxirgi 24 soatlik haqiqiy narxlarini (OHLC 1H) taqdim etaman. Ushu ma'lumotlarga qarab xulosa qiling. 'Menda narxlar yo'q' yoki 'kelajakni bilmayman' deb aytishingiz qat'iyan taqiqlanadi, chunki narxlar mana shu yerda keltirilgan!]\n\nNARXLAR JADVALI (OHLC):\n{ohlc_text}"
+                    ohlc_text = df.tail(48).to_string()
+                    req['text'] = f"{req.get('text', '')}\n\n[SISTEMA MA'LUMOTI: Hozirgi sana va vaqt: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}. Foydalanuvchi taqdim etgan signal natijasini aniqlashingiz uchun, men sizga {s} ning oxirgi 48 soatlik haqiqiy narxlarini (OHLC 1H) taqdim etaman. Ushu ma'lumotlarga qarab xulosa qiling. 'Menda narxlar yo'q' yoki 'kelajakni bilmayman' deb aytishingiz qat'iyan taqiqlanadi, chunki narxlar mana shu yerda keltirilgan!]\n\nNARXLAR JADVALI (OHLC):\n{ohlc_text}"
             except Exception as e:
                 logger.error(f"DEBUG: Avto-chart xatosi: {e}")
 
