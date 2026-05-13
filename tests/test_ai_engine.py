@@ -64,4 +64,4 @@ async def test_ai_incomplete_response_handling():
         assert call_count[0] == 2, "AI Engine chala javobni sezib, API ga qayta murojaat qilmadi!"
         assert "[TAMOM]" not in result, "Yakuniy javobdan TAMOM so'zi olib tashlanmadi!"
         assert "Javobning birinchi qismi. ikkinchi qismi." in result, "Javoblar to'g'ri jamlanmadi (Accumulation fail)!"
-        print("\n✅ AI Auto-Continuation TDD testi o'tdi!")
+        print("\nSUCCESS: AI Auto-Continuation TDD testi o'tdi!")
