@@ -1,0 +1,9 @@
+[SISTEMA: Hozirgi vaqt: 2026-05-13 11:54].
+DIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan to'liq foydalaning va signal qanday yakun topganini hisoblab bering.
+
+shu signal bilan real savdo qilganimda natija nima bo'lar edi? tarixni  ko'rib ayib ber. [12/05/2026 21:58] @awssignal_bot: YANGI SIGNAL: XAU/USD
+
+[SISTEMA MA'LUMOTI: Hozirgi sana va vaqt: 2026-05-13 06:54 UTC. Foydalanuvchi taqdim etgan signal natijasini aniqlashingiz uchun, men sizga XAU/USD ning oxirgi 24 soatlik haqiqiy narxlarini (OHLC 1H) taqdim etaman. Ushu ma'lumotlarga qarab xulosa qiling. 'Menda narxlar yo'q' yoki 'kelajakni bilmayman' deb aytishingiz qat'iyan taqiqlanadi, chunki narxlar mana shu yerda keltirilgan!]
+
+NARXLAR JADVALI (OHLC):
+OHLC DATA DUMMY

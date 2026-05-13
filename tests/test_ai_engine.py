@@ -10,7 +10,7 @@ async def test_ai_signal_review():
     engine = AIEngine(mock_api_keys)
     
     # AI javobini mock qilamiz
-    mock_response = "Signal tahlili: R:R 1:3. Mantiq: BOS+FVG. AI Bahosi: 90/100."
+    mock_response = "Signal tahlili: R:R 1:3. Mantiq: BOS+FVG. AI Bahosi: 90/100. [TAMOM]"
     
     with patch.object(engine, 'get_analysis', new_callable=AsyncMock) as mock_get:
         mock_get.return_value = mock_response
@@ -20,7 +20,7 @@ async def test_ai_signal_review():
         
         assert "AI Bahosi" in result
         assert "90/100" in result
-        print("\n✅ AI Signal Review testi o'tdi!")
+        print("\nSUCCESS: AI Signal Review testi o'tdi!")
 
 @pytest.mark.asyncio
 async def test_ai_incomplete_response_handling():
