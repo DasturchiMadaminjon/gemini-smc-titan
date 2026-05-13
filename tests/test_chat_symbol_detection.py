@@ -11,13 +11,13 @@ async def test_full_ai_context_injection():
     os.environ['TELEGRAM_BOT_TOKEN'] = 'dummy'
     b = bot.GeminiBot()
     
-    # Mock Exchange to return some fake data
+    # Mock Exchange to return some fake data (kamida 50 ta bo'lishi shart)
     data = {
-        'open': [4670.0] * 48,
-        'high': [4720.0] * 48,
-        'low': [4650.0] * 48,
-        'close': [4680.0] * 48,
-        'volume': [1000] * 48
+        'open': [4670.0] * 100,
+        'high': [4720.0] * 100,
+        'low': [4650.0] * 100,
+        'close': [4680.0] * 100,
+        'volume': [1000] * 100
     }
     mock_df = pd.DataFrame(data)
     
@@ -88,6 +88,24 @@ async def test_reply_to_symbol_detection():
     # Simbol to'g'ri aniqlanganligini tasdiqlaymiz
     assert req['symbol'] == 'XAU/USD', f"Kutilgan simbol XAU/USD edi, lekin {req['symbol']} aniqlandi!"
     print("SUCCESS: Reply xabarlaridan simbolni aniqlash TDD testi muvaffaqiyatli o'tdi!")
+
+@pytest.mark.asyncio
+async def test_xausd_typo_detection():
+    from utils.telegram import TelegramNotifier
+    config = {'telegram': {'bot_token': 'dummy'}, 'gemini_ai': {'api_keys': ['key']}}
+    notifier = TelegramNotifier(config, threading.Lock())
+    notifier.user_states['12345'] = 'in_session'
+    notifier.user_modules['12345'] = 'chat'
+    
+    # User sends "XAUSD narxi" (typo)
+    u = {'update_id': 1, 'message': {'from': {'id': 12345}, 'chat': {'id': 12345}, 'text': 'XAUSD narxi qancha'}}
+    bs = {'ai_requests': []}
+    
+    await notifier.handle_update(u, bs, {}, AsyncMock(), "dummy_offset.txt")
+    
+    assert len(bs['ai_requests']) > 0
+    assert bs['ai_requests'][-1]['symbol'] == 'XAU/USD', "XAUSD typo aniqlanmadi!"
+    print("SUCCESS: XAUSD typo detection TDD testi muvaffaqiyatli o'tdi!")
 
 if __name__ == "__main__":
     import asyncio
