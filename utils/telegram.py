@@ -744,7 +744,7 @@ class TelegramNotifier:
                 
                 if search_text:
                     _SYMBOL_HINTS = {
-                        'gold': 'XAU/USD', 'xau/usd': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD',
+                        'gold': 'XAU/USD', 'xau/usd': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD', 'xausd': 'XAU/USD',
                         'silver': 'XAG/USD', 'xag/usd': 'XAG/USD', 'xag': 'XAG/USD', 'kumush': 'XAG/USD',
                         'btc': 'BTC/USDT', 'btc/usdt': 'BTC/USDT', 'bitcoin': 'BTC/USDT',
                         'eth': 'ETH/USDT', 'eth/usdt': 'ETH/USDT', 'ethereum': 'ETH/USDT', 'efir': 'ETH/USDT',

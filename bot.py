@@ -152,7 +152,7 @@ class GeminiBot:
         # Avtomatik Chart generatsiyasi va Kontekst yig'ish
         if t in ['technical', 'scalping', 'chat', 'mentor_qa', 'fundamental', 'mentor_lessons', 'mentor_live_examples'] and s not in ('SMC', 'ALL'):
             try:
-                df = await self.exchange.fetch_ohlcv(s, '1h', limit=48) # Oxirgi 48 soat (2 kun)
+                df = await self.exchange.fetch_ohlcv(s, '1h', limit=100) # Oxirgi 100 soat (4 kun)
                 if df is not None and not df.empty:
                     if not img and t in ['technical', 'scalping']:
                         img = await generate_chart_buffer(df)

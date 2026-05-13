@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 SYMBOL_MAP = {
     'XAU/USD': 'GC=F',
     'XAUUSD': 'GC=F',
+    'XAUSD': 'GC=F',
     'GOLD': 'GC=F',
     'XAG/USD': 'SI=F',
     'XAGUSD': 'SI=F',
