@@ -719,7 +719,14 @@ class TelegramNotifier:
                 
                 module_type = self.user_modules.get(uid, 'mentor_qa')
                 detected_symbol = 'SMC'
-                if user_text:
+                
+                # Simbolni aniqlash uchun matnlar yig'indisi (Caption + Reply)
+                search_text = user_text
+                reply_to = m.get('reply_to_message', {})
+                if reply_to:
+                    search_text += " " + (reply_to.get('text', '') or reply_to.get('caption', '') or "")
+                
+                if search_text:
                     _SYMBOL_HINTS = {
                         'gold': 'XAU/USD', 'xau/usd': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD',
                         'silver': 'XAG/USD', 'xag/usd': 'XAG/USD', 'xag': 'XAG/USD', 'kumush': 'XAG/USD',
@@ -730,7 +737,7 @@ class TelegramNotifier:
                         'oil': 'OIL/USD', 'neft': 'OIL/USD',
                         'nasdaq': 'NASDAQ', 'sp500': 'S&P500',
                     }
-                    _txt_lower = user_text.lower()
+                    _txt_lower = search_text.lower()
                     for hint, sym_name in _SYMBOL_HINTS.items():
                         if hint in _txt_lower:
                             detected_symbol = sym_name
