@@ -16,7 +16,7 @@ async def test_ai_key_rotation_on_403_error():
     with patch.object(engine, 'client') as mock_client:
         # 1-chaqiriqda 403 xatosi bersin, 2-sida muvaffaqiyatli javob
         mock_response = MagicMock()
-        mock_response.text = "TASDIQLANDI: Bu 2-kalit orqali olingan javob."
+        mock_response.text = "TASDIQLANDI: Bu 2-kalit orqali olingan javob. [TAMOM]"
         
         # Side effect: 1. Exception (403), 2. Success Response
         mock_chat = MagicMock()
