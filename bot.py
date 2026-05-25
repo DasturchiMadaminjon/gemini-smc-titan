@@ -322,6 +322,10 @@ class GeminiBot:
             
             # 1. Breakeven & Win Check (Juda soddalashtirilgan jonli check)
             # Aslida CCXT orqali oxirgi N sham high/low qaralishi kerak, lekin jonli ishlayotganda hozirgi narx yetarli
+            if p_sl is None or p_tp1 is None:
+                self.db.update_signal_result(p_id, 'IGNORED (OLD)')
+                continue
+
             is_win = False
             is_loss = False
             if p_dir == 'BUY':

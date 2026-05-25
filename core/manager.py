@@ -107,7 +107,6 @@ class TradeManager:
             balance, risk_pct, sig.entry, sig.sl, sig.tp1, sig.tp2, sym
         )
 
-        from datetime import datetime, timedelta, timezone
         uzt = datetime.now(timezone.utc) + timedelta(hours=5)
         terminal_time = sig.timestamp.strftime('%H:%M') if hasattr(sig.timestamp, 'strftime') else str(sig.timestamp)
 
