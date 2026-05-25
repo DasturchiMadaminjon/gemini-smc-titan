@@ -81,6 +81,14 @@ class TradeManager:
         if self._is_duplicate(sym, sig.direction, sig.entry):
             return
 
+        # Bazaga faqat yuboriladigan haqiqiy va tasdiqlangan signalni yozamiz
+        now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
+        sig_hash = self._signal_hash(sym, sig.direction, sig.entry)
+        self.db.add_signal(
+            now_str, sym, sig.direction, sig.entry, sig.sl, sig.tp1, 
+            int(sig.quality), sig.reason, sig_hash=sig_hash
+        )
+
         balance = state.get('terminal', {}).get('balance', 5000.0)
 
         # ✅ #4 Streak himoyasi

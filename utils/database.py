@@ -13,22 +13,38 @@ class DatabaseManager:
         self._init_db()
 
     def _get_conn(self):
-        return sqlite3.connect(self.db_path, timeout=30)
+        conn = sqlite3.connect(self.db_path, timeout=30)
+        try:
+            conn.execute("PRAGMA journal_mode=WAL;")
+        except Exception:
+            pass
+        return conn
 
     def _execute_query(self, query, params=(), is_fetch=False):
-        conn = self._get_conn()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(query, params)
-            if is_fetch:
-                return cursor.fetchall()
-            conn.commit()
-            return True
-        except Exception as e:
-            logger.error(f"Database Query Error: {e}")
-            return None
-        finally:
-            conn.close()
+        import time
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                conn = self._get_conn()
+                cursor = conn.cursor()
+                cursor.execute(query, params)
+                if is_fetch:
+                    res = cursor.fetchall()
+                    conn.close()
+                    return res
+                conn.commit()
+                conn.close()
+                return True
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e).lower() and attempt < max_retries - 1:
+                    time.sleep(0.05 * (attempt + 1))  # Exponential backoff
+                    continue
+                logger.error(f"Database Query Error (Locked/Operational): {e}")
+                return None
+            except Exception as e:
+                logger.error(f"Database Query Error: {e}")
+                return None
+
 
     def _init_db(self):
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)

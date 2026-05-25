@@ -344,7 +344,14 @@ class GeminiBot:
             # 2. Timeout (12 soatdan oshsa)
             if elapsed_hours >= 12.0:
                 pnl = curr_p - p_entry if p_dir == 'BUY' else p_entry - curr_p
-                status_text = f"+${pnl:.4f} (Plyusda)" if pnl > 0 else f"-${abs(pnl):.4f} (Minusda)"
+                pnl_perc = (pnl / p_entry) * 100 if p_entry else 0.0
+                quote_currency = p_sym.split('/')[-1] if '/' in p_sym else 'USDT'
+                if pnl > 0:
+                    status_text = f"+{pnl_perc:.2f}% (+{pnl:.4f} {quote_currency} Narx Farqi) (Plyusda)"
+                elif pnl < 0:
+                    status_text = f"-{abs(pnl_perc):.2f}% (-{abs(pnl):.4f} {quote_currency} Narx Farqi) (Minusda)"
+                else:
+                    status_text = f"0.00% (0.0000 {quote_currency} Narx Farqi) (Fletda)"
                 
                 msg = (
                     f"⏳ <b>TIMEOUT ALERT (12 soat)</b>\n\n"
@@ -480,9 +487,6 @@ class GeminiBot:
                     min_q = self.cfg.get('smc', {}).get('min_quality', 75.0)
                     if sig and sig.quality >= min_q:
                         logger.info(f"🎯 [SIGNAL DETECTED] {s} | Quality: {sig.quality}% | Direction: {sig.direction}")
-                        now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')
-                        self.db.add_signal(now_str, s, sig.direction, sig.entry, sig.sl, sig.tp1, int(sig.quality), sig.reason)
-                        
                         ai_review_enabled = self.bot_state.get('settings', {}).get('ai_review_enabled', True)
                         safe_ai_reason = None
                         
