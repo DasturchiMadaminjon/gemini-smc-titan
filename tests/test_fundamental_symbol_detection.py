@@ -223,16 +223,15 @@ class TestFundamentalAIRequestQueue:
         ai = AIEngine(api_keys=['fakekey'], model_name='models/gemini-2.5-flash')
         ai.client = MagicMock()
 
-        # Mock javob — RAD etish emas, tahlil berishi kerak
-        mock_chat = MagicMock()
-        ai.client.chats.create.return_value = mock_chat
-
-        expected_response = (
+        # Mock generate_content response (including the mandatory [TAMOM] suffix)
+        mock_response = MagicMock()
+        mock_response.text = (
             "📌 INSTRUMENT: ETH/USDT\n"
             "💲 JORIY NARX: 3,500 USD\n"
             "📊 MAKRO BIAS: BULLISH — DeFi faoliyati oshmoqda\n"
+            " [TAMOM]"
         )
-        mock_chat.send_message.return_value = MagicMock(text=expected_response)
+        ai.client.models.generate_content = MagicMock(return_value=mock_response)
 
         ai.rag = None
         result = await ai.get_analysis(

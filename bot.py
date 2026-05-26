@@ -547,8 +547,8 @@ class GeminiBot:
                         print(f"📤 [TELEGRAM] Xabar yuborilmoqda...")
                         await self.trades.process_and_send_signal(s, sig, self.bot_state, ai_reason=safe_ai_reason, chart_buf=chart_buf)
                         print(f"✅ [SUCCESS] {s} yuborildi!")
-                elif sig:
-                    print(f"[SKIP] {s} signal sifati past ({sig.quality}% < {min_q}%)")
+                    elif sig:
+                        print(f"[SKIP] {s} signal sifati past ({sig.quality}% < {min_q}%)")
                 await asyncio.sleep(10)
             # ✅ Watchdog uchun heartbeat
             try:

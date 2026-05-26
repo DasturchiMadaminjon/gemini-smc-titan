@@ -107,7 +107,29 @@ async def test_xausd_typo_detection():
     assert bs['ai_requests'][-1]['symbol'] == 'XAU/USD', "XAUSD typo aniqlanmadi!"
     print("SUCCESS: XAUSD typo detection TDD testi muvaffaqiyatli o'tdi!")
 
+@pytest.mark.asyncio
+async def test_out_of_session_symbol_detection():
+    from utils.telegram import TelegramNotifier
+    config = {'telegram': {'bot_token': 'dummy'}, 'gemini_ai': {'api_keys': ['key']}}
+    notifier = TelegramNotifier(config, threading.Lock())
+    # Note: user_states is intentionally left empty (out of session)
+    
+    # User sends "XAU/USD narxi haqida gapir" directly in the general chat
+    u = {'update_id': 1, 'message': {'from': {'id': 12345}, 'chat': {'id': 12345}, 'text': 'XAU/USD narxi haqida gapir'}}
+    bs = {'ai_requests': []}
+    
+    # mock sess post
+    notifier.send = AsyncMock()
+    
+    await notifier.handle_update(u, bs, {}, AsyncMock(), "dummy_offset.txt")
+    
+    assert len(bs['ai_requests']) > 0
+    assert bs['ai_requests'][-1]['symbol'] == 'XAU/USD', "Out-of-session symbol detection failed!"
+    print("SUCCESS: Out-of-session symbol detection TDD testi muvaffaqiyatli o'tdi!")
+
 if __name__ == "__main__":
     import asyncio
     asyncio.run(test_full_ai_context_injection())
     asyncio.run(test_reply_to_symbol_detection())
+    asyncio.run(test_xausd_typo_detection())
+    asyncio.run(test_out_of_session_symbol_detection())

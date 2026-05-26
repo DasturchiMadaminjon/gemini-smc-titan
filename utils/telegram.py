@@ -925,8 +925,33 @@ class TelegramNotifier:
                 self.chat_history[uid].append({'role': 'user', 'text': user_text})
                 if len(self.chat_history[uid]) > self.MAX_HISTORY:
                     self.chat_history[uid] = self.chat_history[uid][-self.MAX_HISTORY:]
+
+                # Simbolni matndan aniqlash
+                detected_symbol = 'KB'
+                search_text = user_text
+                reply_to = m.get('reply_to_message', {})
+                if reply_to:
+                    search_text += " " + (reply_to.get('text', '') or reply_to.get('caption', '') or "")
+                
+                if search_text:
+                    _SYMBOL_HINTS = {
+                        'gold': 'XAU/USD', 'xau/usd': 'XAU/USD', 'xau': 'XAU/USD', 'oltin': 'XAU/USD', 'xausd': 'XAU/USD',
+                        'silver': 'XAG/USD', 'xag/usd': 'XAG/USD', 'xag': 'XAG/USD', 'kumush': 'XAG/USD',
+                        'btc': 'BTC/USDT', 'btc/usdt': 'BTC/USDT', 'bitcoin': 'BTC/USDT',
+                        'eth': 'ETH/USDT', 'eth/usdt': 'ETH/USDT', 'ethereum': 'ETH/USDT', 'efir': 'ETH/USDT',
+                        'eur': 'EUR/USD', 'eur/usd': 'EUR/USD', 'gbp': 'GBP/USD', 'gbp/usd': 'GBP/USD',
+                        'dxy': 'DXY', 'dollar': 'DXY',
+                        'oil': 'OIL/USD', 'neft': 'OIL/USD',
+                        'nasdaq': 'NASDAQ', 'sp500': 'S&P500',
+                    }
+                    _txt_lower = search_text.lower()
+                    for hint, sym_name in _SYMBOL_HINTS.items():
+                        if hint in _txt_lower:
+                            detected_symbol = sym_name
+                            break
+
                 with self.lock: bs['ai_requests'].append({
-                    'type': 'chat', 'symbol': 'KB',
+                    'type': 'chat', 'symbol': detected_symbol,
                     'chat_id': uid, 'text': user_text, 'image': img_data
                 })
                 await self.send("⏳ Tahlil boshlandi...", cid=uid)

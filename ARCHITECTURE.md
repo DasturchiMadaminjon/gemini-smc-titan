@@ -33,5 +33,14 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 - Barcha amallar `logs/` papkasida qayd etiladi.
 - Har bir signal uchun unique Hash yaratilib, loglarda kuzatib boriladi.
 
+## 7. Muhim Qoidalar (Invariants) 🔐
+- XAU/USD narx ma'lumotlari har doim `GC=F` (Yahoo Finance Gold Futures) tickeridan yuklanadi, chunki `XAUUSD=X` spot delist bo'lgan.
+- Foydalanuvchi umumiy chatda biron instrumentni (masalan: XAU/USD, BTC/USDT) so'rasa, bot dinamik ravishda buni aniqlab real-time narxlarni AI promptiga kiritishi shart.
+
+## 8. O'zgarishlar Tarixi
+| Sana | O'zgarish | Muallif |
+|------|-----------|---------|
+| 2026-05-26 | Umumiy chat fallbackda XAU/USD va boshqa instrumentlar uchun dinamik simbol aniqlash qo'shildi. bot.py dagi 'elif sig:' indent bugi to'g'irlandi. | Antigravity AI |
+
 ---
 *Titan V27.2 - Barqarorlik, Professionalizm va Yuqori Sifat uchun yaratilgan.*
