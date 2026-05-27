@@ -1,0 +1,36 @@
+=========================================================================================================================================
+                                     🦾 GEMINI SMC TITAN V27.2 — AWS LINUX TIZIM BUYRUQLARI JADVALI
+=========================================================================================================================================
+
++---------------------------------------------+-----------------------------------------------------------+-------------------------------------------------------------+
+| Buyruq (Command)                            | Vazifasi (Description)                                    | Qachon ishlatiladi (When to use)                            |
++---------------------------------------------+-----------------------------------------------------------+-------------------------------------------------------------+
+|                                             |                                                           |                                                             |
+| === VERSLYA NAZORATI VA YANGILASH ===       |                                                           |                                                             |
+| cd ~/temp_master_zip                        | Loyiha papkasiga o'tish                                   | Har safar serverga kirganda birinchi bo'lib                 |
+| git pull origin main                        | GitHub'dan eng so'nggi kodni yuklab olish                 | Koddagi yangilanishlarni serverda qo'llashda                |
+|                                             |                                                           |                                                             |
+| === TDD VA DIAGNOSTIKA (AUDIT) ===          |                                                           |                                                             |
+| source venv/bin/activate                    | Virtual muhitni (venv) faollashtirish                     | Testlarni yoki skriptlarni qo'lda ishga tushirishdan oldin  |
+| python3 scratch_analyze_market_now.py       | Jonli SMC bozor diagnostikasini ishga tushirish           | Signal nega kelmayotgani yoki tahlil to'g'riligini ko'rishda|
+| python3 -m pytest tests/ -v                 | Loyihadagi barcha 136 ta TDD testlarini yurgizish         | Yangi o'zgarishlar kiritilganda tizim butunligini tekshirish|
+|                                             |                                                           |                                                             |
+| === BOTNI BOSHQARISH VA RESTART ===         |                                                           |                                                             |
+| pkill -f watchdog.py                        | Watchdog monitoring jarayonini butunlay o'chirish         | Botni to'liq to'xtatish yoki toza restart qilishdan oldin    |
+| pkill -f bot.py                             | Asosiy bot jarayonini butunlay o'chirish                  | Watchdog o'chgandan so'ng botni ham o'chirish uchun         |
+| screen -S titan_bot -d -m bash -c ...       | Botni screen ichida 24/7 fonda toza yoqish                | Tozalash ishlari bajarilgandan so'ng botni qayta ishlatishda|
+|                                             |                                                           |                                                             |
+| === SCREEN (EKRAN) MONITORINGI ===          |                                                           |                                                             |
+| screen -ls                                  | Ishlayotgan ekranlar (screen) ro'yxatini ko'rish          | Parallel ziddiyatli ekranlar bor-yo'qligini aniqlashda      |
+| screen -wipe                                | Muzlab qolgan yoki o'chgan ekranlarni tozalash            | `screen -ls` da 'Dead' ekranlar ko'rinib qolganda           |
+| screen -r titan_bot                         | Bot ishlayotgan faol ekranga ulanish                      | Jonli konsol loglarini va skanerlash jarayonini kuzatishda  |
+| Ctrl + A, keyin D (klaviaturada)            | Ekrandan botni o'chirmasdan chiqish (Detach)              | Kuzatish tugagach, bot fonda ishlashini davom ettirishi uchun|
+|                                             |                                                           |                                                             |
+| === LOGLAR MONITORINGI ===                  |                                                           |                                                             |
+| tail -f bot_log.txt                         | Botning real-time skanerlash va signal logini ko'rish     | Signal generatsiyalari va skaner aylanishlarini tekshirishda|
+| tail -f logs/bot.log                        | Batafsil tizimli loglar oqimini ko'rish                   | Muhim iqtisodiy yangiliklar va watchdog faoliyatida         |
++---------------------------------------------+-----------------------------------------------------------+-------------------------------------------------------------+
+
+=========================================================================================================================================
+* Eslatma: Hamma buyruqlarni loyihaning asosiy papkasida (`cd ~/temp_master_zip`) va `venv` faollashtirilgan holatda yurgizish tavsiya etiladi.
+=========================================================================================================================================
