@@ -65,3 +65,40 @@ async def test_ai_incomplete_response_handling():
         assert "[TAMOM]" not in result, "Yakuniy javobdan TAMOM so'zi olib tashlanmadi!"
         assert "Javobning birinchi qismi. ikkinchi qismi." in result, "Javoblar to'g'ri jamlanmadi (Accumulation fail)!"
         print("\nSUCCESS: AI Auto-Continuation TDD testi o'tdi!")
+
+
+@pytest.mark.asyncio
+async def test_ai_unbracketed_tamom_handling():
+    """TDD: AI qavssiz TAMOM (yoki nuqta bilan) qaytarganda to'g'ri ishlashini tekshirish"""
+    engine = AIEngine(["fake_key"])
+    
+    responses = [
+        "Javobning birinchi qismi. ",
+        "ikkinchi qismi. TAMOM."
+    ]
+    
+    call_count = [0]
+    
+    async def mock_generate_content(*args, **kwargs):
+        if call_count[0] < len(responses):
+            t = responses[call_count[0]]
+        else:
+            t = responses[-1]
+        call_count[0] += 1
+        
+        class DummyResponse:
+            @property
+            def text(self):
+                return t
+        return DummyResponse()
+    
+    with patch("asyncio.to_thread", new_callable=AsyncMock) as mock_thread:
+        mock_thread.side_effect = mock_generate_content
+        
+        result = await engine.get_analysis("test prompt")
+        
+        assert call_count[0] == 2, "AI Engine chala javobni sezib, API ga qayta murojaat qilmadi!"
+        assert "TAMOM" not in result, "Yakuniy javobdan TAMOM so'zi olib tashlanmadi!"
+        assert "Javobning birinchi qismi. ikkinchi qismi." in result, "Javoblar to'g'ri jamlanmadi!"
+        print("\nSUCCESS: AI Unbracketed TAMOM TDD testi o'tdi!")
+

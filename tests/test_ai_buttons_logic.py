@@ -76,7 +76,7 @@ class TestAIButtonsLogic:
         # Side effect: first call fails, second succeeds
         mock_models.generate_content.side_effect = [
             Exception("429 Resource exhausted"),
-            MagicMock(text="Key rotated success")
+            MagicMock(text="Key rotated success [TAMOM]")
         ]
         
         ai = AIEngine(mock_cfg['gemini_ai']['api_keys'], "gemini-1.5-flash")

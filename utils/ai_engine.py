@@ -146,14 +146,17 @@ class AIEngine:
                     accumulated_text += new_text
                     
                     # TAMOM belgisi kelganini tekshirish
-                    if "[TAMOM]" in accumulated_text.upper():
+                    import re as _re
+                    acc_upper = accumulated_text.strip().upper()
+                    if "[TAMOM]" in acc_upper or _re.search(r'\bTAMOM\b\s*[.!]*$', acc_upper):
                         break
                     
                     logger.info(f"AI javobi chala (Attempt {inner_attempt+1}). Davomini so'raymiz...")
                     await asyncio.sleep(0.5)
 
                 # Yakuniy tozalash
-                final_res = accumulated_text.replace("[TAMOM]", "").replace("[tamom]", "").strip()
+                import re as _re
+                final_res = _re.sub(r'(?i)\s*\[?TAMOM\]?[.!]*\s*$', '', accumulated_text).strip()
                 return final_res
             except Exception as e:
                 err = str(e).upper()
