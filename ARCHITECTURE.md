@@ -41,6 +41,7 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 | Sana | O'zgarish | Muallif |
 |------|-----------|---------|
 | 2026-05-26 | Umumiy chat fallbackda XAU/USD va boshqa instrumentlar uchun dinamik simbol aniqlash qo'shildi. bot.py dagi 'elif sig:' indent bugi to'g'irlandi. | Antigravity AI |
+| 2026-06-04 | Gemini AI takroriy javoblar berishi (unbracketed TAMOM) bartaraf etildi va testlar yangilandi. | Antigravity AI |
 
 ---
 *Titan V27.2 - Barqarorlik, Professionalizm va Yuqori Sifat uchun yaratilgan.*
