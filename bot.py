@@ -203,14 +203,23 @@ class GeminiBot:
             except Exception as ws_err:
                 print(f"[WEB] Qidiruv xatosi: {ws_err}")
 
+        # Check if OHLC data was actually added to req['text']
+        has_ohlc = "NARXLAR JADVALI (OHLC):" in req.get('text', '')
+
         prompts = {
             'analytics':   f"{prompt_text if t=='analytics' else ''}",
             'technical':   f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. SMC metodikasi asosida TO'LIQ texnik tahlil ber. Grafikdagi zonalarni va OHLC ma'lumotlarini izohla.",
             'scalping':    f"Instrument: {s} | Joriy narx: {p}\n{req.get('text', '')}\nMana oxirgi 100 ta sham charti. M5/M15 uchun tezkor scalping kirish rejasini ber.",
             'fundamental': f"Instrument: {s} | Joriy narx: {p}\nSavol/Mavzu: {req.get('text', '')}{news_context}\n{web_context}\nFAQAT makro drayverlar (DXY, FED, yangiliklar) asosida fundamental tahlil qil. SMC aytma. Hozirgi sana {datetime.now().strftime('%Y-%m-%d %H:%M')}, ma'lumotlar real vaqtdagidir.",
-            'chat':        f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\nDIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan to'liq foydalaning va signal qanday yakun topganini hisoblab bering.\n\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
+            'chat':        f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}]." + 
+                           ("\nDIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan to'liq foydalaning va signal qanday yakun topganini hisoblab bering.\n\n" if has_ohlc else "\n\n") + 
+                           (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + 
+                           (" [Rasm yuborildi — SMC tahlil qil. BOS, CHoCH, OB va FVG darajalarini qidir. Kirish va risk-menejment bo'yicha maslahat ber.]" if img else ""),
             'mentor_lessons':       f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}",
-            'mentor_qa':            f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\nDIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan foydalanib xulosa qiling.\n\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
+            'mentor_qa':            f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}]." + 
+                           ("\nDIQQAT: Matn oxirida berilgan OHLC narxlar jadvalidan foydalanib xulosa qiling.\n\n" if has_ohlc else "\n\n") + 
+                           (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}" + 
+                           (" [Rasm yuborilgan bo'lsa SMC tahlil qil]" if img else ""),
             'mentor_live_examples': f"[SISTEMA: Hozirgi vaqt: {datetime.now().strftime('%Y-%m-%d %H:%M')}].\n" + (f"{web_context}\n\n" if web_context else "") + f"{req.get('text', '')}"
         }
         prompt = prompts.get(t, prompts['technical'])
