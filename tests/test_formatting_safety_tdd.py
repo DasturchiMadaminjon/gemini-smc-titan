@@ -18,7 +18,7 @@ async def test_telegram_message_chunking():
     TDD: TelegramNotifier uzun xabarlarni (4000+ belgi) bo'laklarga bo'lishini tekshirish.
     """
     # Mocking ClientSession.post
-    with patch('aiohttp.ClientSession.post') as mock_post:
+    with patch('aiohttp.ClientSession.post') as mock_post, patch.dict('os.environ', {'TELEGRAM_CHAT_ID': '12345'}):
         # Async context manager mock
         mock_resp = AsyncMock()
         mock_resp.status = 200

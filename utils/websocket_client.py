@@ -12,7 +12,7 @@ class BinanceWS:
     def __init__(self, symbols: List[str], callback: Callable[[str, float], None]):
         self.symbols = [s.lower().replace('/', '').replace('usdt', 'usdt') for s in symbols if 'USDT' in s]
         self.callback = callback
-        self._stop_event = asyncio.Event()
+        self._stop_event = threading.Event()
         self._thread = None
         self._loop = None
 

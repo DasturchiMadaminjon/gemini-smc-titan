@@ -58,7 +58,7 @@ class AIEngine:
                 "'bilmayman' deyish, 2026-yil haqida generic gapirish. "
                 "Faqat BERILGAN INSTRUMENT haqida, ANIQ RAQAMLAR bilan javob ber."
             ),
-            "chat": "Siz 'SMC MENTOR' yordamchisiz. Savollarga bilim bazasi asosida aniq javob bering. Bahona qilmang.",
+            "chat": "Siz 'SMC MENTOR' yordamchisiz. Savollarga taqdim etilgan bilim bazasi va Google Search qidiruv natijalari asosida aniq javob bering. Bahona qilmang.",
             "evaluator": (
                 "Siz 'TITAN SMC MASTER' - botning ASOSIY QAROR CHIQARUVCHI miyasisiz. "
                 "Sizga berilayotgan raqamlar (Signal Data) - bu sening o'z indikatoringdan kelgan ANIQ FAKTLAR. "
@@ -150,6 +150,12 @@ class AIEngine:
                     new_text = response.text
                     accumulated_text += new_text
                     
+                    # Agar finish_reason MAX_OUTPUT_TOKENS bo'lmasa va model tabiiy to'xtagan bo'lsa, davom ettirmaymiz
+                    candidate = response.candidates[0] if getattr(response, 'candidates', None) else None
+                    finish_reason = str(getattr(candidate, 'finish_reason', '')).upper()
+                    if finish_reason and "MAX_OUTPUT_TOKENS" not in finish_reason:
+                        break
+
                     # TAMOM belgisi kelganini tekshirish
                     import re as _re
                     acc_upper = accumulated_text.strip().upper()
