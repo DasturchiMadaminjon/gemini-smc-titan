@@ -110,10 +110,15 @@ class AIEngine:
                 # 1. Google Search bilan urinib ko'rish
                 # SDK muvofiqligi uchun eng sodda va xavfsiz konfiguratsiya
                 # Qat'iy konfiguratsiya
+                tools = []
+                if context_type in ['chat', 'fundamental', 'mentor_lessons', 'mentor_qa', 'mentor_live_examples']:
+                    tools.append(types.Tool(google_search=types.GoogleSearch()))
+
                 config = types.GenerateContentConfig(
                     system_instruction=full_instruction + " MUHIM: Tahlilni to'liq yakunlang va eng oxirida [TAMOM] so'zini yozing.",
                     temperature=0.3, # Yanada barqaror javob uchun
                     max_output_tokens=8192,
+                    tools=tools if tools else None,
                     safety_settings=[
                         types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
                         types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),

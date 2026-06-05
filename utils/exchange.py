@@ -199,12 +199,12 @@ class ExchangeClient:
             if need_resample:
                 df = _resample_4h(df)
 
-            # Oxirgi limit ta sham
-            df = df.tail(limit)
-
             if len(df) < 50:
                 logger.debug(f"[EXCHANGE] {symbol}: yetarli sham yo'q ({len(df)} < 50)")
                 return None
+
+            # Oxirgi limit ta sham
+            df = df.tail(limit)
 
             logger.debug(f"[EXCHANGE] {symbol} ({ticker}): {len(df)} ta sham olindi ✅")
             return df

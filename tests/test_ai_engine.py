@@ -102,3 +102,37 @@ async def test_ai_unbracketed_tamom_handling():
         assert "Javobning birinchi qismi. ikkinchi qismi." in result, "Javoblar to'g'ri jamlanmadi!"
         print("\nSUCCESS: AI Unbracketed TAMOM TDD testi o'tdi!")
 
+
+@pytest.mark.asyncio
+async def test_ai_search_grounding_configuration():
+    """TDD: Google Search grounding to'g'ri ulanishini tekshirish."""
+    engine = AIEngine(["fake_key_12345678901234567890"])
+    
+    generated_configs = []
+    
+    async def mock_generate_content(func, *args, **kwargs):
+        if 'config' in kwargs:
+            generated_configs.append(kwargs['config'])
+        class DummyResponse:
+            text = "Mocked response. [TAMOM]"
+        return DummyResponse()
+
+    with patch("asyncio.to_thread", side_effect=mock_generate_content):
+        # 1. Fundamental uchun search grounding bo'lishi kerak
+        await engine.get_analysis("uznex news", context_type="fundamental")
+        assert len(generated_configs) == 1
+        config_fund = generated_configs[0]
+        assert config_fund.tools is not None
+        assert len(config_fund.tools) == 1
+        # Google Search tool borligini tekshirish
+        tool = config_fund.tools[0]
+        assert hasattr(tool, 'google_search') or 'google_search' in str(tool)
+
+        # 2. Technical uchun search grounding bo'lmasligi kerak
+        generated_configs.clear()
+        await engine.get_analysis("XAU/USD", context_type="technical")
+        assert len(generated_configs) == 1
+        config_tech = generated_configs[0]
+        assert config_tech.tools is None or not config_tech.tools
+
+

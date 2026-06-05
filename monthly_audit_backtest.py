@@ -39,13 +39,13 @@ async def run_full_monthly_audit():
     for symbol in symbols:
         print(f"Analiz: {symbol}...", end=' ')
         try:
-            df = exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+            df = await exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
             
             if df is None or len(df) < 500:
                 print(f"SKIP (Ma'lumot kam: {len(df) if df is not None else 0})")
                 continue
                 
-            htf_df = exchange.fetch_ohlcv(symbol, '1h', limit=500)
+            htf_df = await exchange.fetch_ohlcv(symbol, '1h', limit=500)
             sym_signals = []
             
             # Har 5 shamda bir tekshiramiz (step=5) tezlik uchun

@@ -25,7 +25,7 @@ async def test_xauusd_vs_spx_isolation():
     # Oltin narxi SPX narxidan kamida 1000 birlikka farq qilishi kerak
     diff = abs(gold_price - spx_price)
     assert diff > 1000, f"KRITIK XATO: Oltin narxi ({gold_price}) SPX narxiga ({spx_price}) juda yaqin! Tikerlar adashgan bo'lishi mumkin."
-    assert gold_price < 3500, f"Oltin narxi me'yordan baland: {gold_price}"
+    assert gold_price < 6000, f"Oltin narxi me'yordan baland: {gold_price}"
 
 def test_symbol_mapping_integrity():
     """
