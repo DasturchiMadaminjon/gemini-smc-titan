@@ -268,17 +268,6 @@ class TelegramNotifier:
                 # ALERTLAR
                 "➡️ Yangi Alert": "alert_add",
                 "🗑 Hammasini O'chir": "alert_clear",
-
-                # FOYDALANUVCHI BOSHQARUVI
-                "👤 A'zolarni Boshqarish": "users_menu",
-                "👥 A'zolar Ro'yxati": "users_list",
-                "🔓 Hammaga Ochiq (PUBLIC)": "access_public",
-                "🔒 Tanlanganlarga (RESTRICTED)": "access_restricted",
-                "➕ Ruxsat Berish": "users_whitelist",
-                "⛔ Bloklash": "users_block",
-                "🔗 Havolani O'zgartirish": "users_change_link",
-                "✍️ Matnni Tahrirlash": "users_change_text",
-                "🔙 Sozlamalarga Qaytish": "back_to_settings",
             }
             if t in text_to_cb:
                 cb = {'id': 'fake_id', 'data': text_to_cb[t], 'from': {'id': uid}}
@@ -896,7 +885,7 @@ class TelegramNotifier:
                 ], 'resize_keyboard': True}
                 await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
 
-            elif t == "🔙 Sozlamalarga Qaytish" and is_admin:
+            elif "Sozlamalarga Qaytish" in t and is_admin:
                 # A'zolar menyusidan sozlamalarga qaytish
                 ai_enabled = bs.get('settings', {}).get('ai_review_enabled', True)
                 ai_btn = "🤖 AI Xulosa: 🟢 YOQ" if ai_enabled else "🤖 AI Xulosa: 🔴 O'CH"
@@ -912,7 +901,7 @@ class TelegramNotifier:
                 ], 'resize_keyboard': True}
                 await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
 
-            elif "A'zolarni Boshqarish" in t and is_admin:
+            elif "zolarni Boshqarish" in t and is_admin:
                 # 👤 A'zolarni Boshqarish submenyusi
                 cur_mode = self.db.get_setting("access_mode", "PUBLIC")
                 mode_emoji = "🔓" if cur_mode == "PUBLIC" else "🔒"
@@ -930,7 +919,7 @@ class TelegramNotifier:
                     cid=uid, kb=json.dumps(ikb)
                 )
 
-            elif "A'zolar Ro'yxati" in t and is_admin:
+            elif "zolar Ro" in t and is_admin:
                 users = self.db.get_all_users()
                 if not users:
                     await self.send("👥 Hozircha ro'yxatda hech kim yo'q.", cid=uid)
