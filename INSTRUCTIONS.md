@@ -26,6 +26,24 @@ Ushbu qo'llanma botning asosiy funksiyalaridan qanday samarali foydalanishni tus
 - **🔍 Backtest (Apr-May)**: `python3 backtest_100_signals.py` buyrug'i orqali aprel oyidan beri bo'lgan tarixni tahlil qilish va natijani Telegramga olish.
 - **🚨 PANIC CLOSE ALL**: Barcha ochiq savdolarni shoshilinch yopish va bot ishini vaqtincha to'xtatish.
 
+### 3. 👤 A'zolarni Boshqarish (Admin — Sozlamalar menyusida)
+
+`⚙️ Sozlamalar` → `👤 A'zolarni Boshqarish` tugmasini bosib, quyidagi funksiyalarga kiring:
+
+| Tugma | Vazifasi |
+|-------|---------|
+| `👥 A'zolar Ro'yxati` | Barcha foydalanuvchilarni ID, username va status bilan ko'rsatadi |
+| `🔓 Hammaga Ochiq (PUBLIC)` | Barcha yangi foydalanuvchilarga kirishni ochadi |
+| `🔒 Tanlanganlarga (RESTRICTED)` | Faqat siz ruxsat berganlar kira oladi; qolgan barchaga admin havolasi yuboriladi |
+| `➕ Ruxsat Berish` | Foydalanuvchi IDsini kiritib, uni `ACTIVE` qilish |
+| `⛔ Bloklash` | Foydalanuvchi IDsini kiritib, uni `BLOCKED` qilish |
+| `🔗 Havolani O'zgartirish` | Bloklangan foydalanuvchilarga ko'rsatiladigan admin havolasini o'zgartirish |
+| `✍️ Matnni Tahrirlash` | Havolaga qo'shimcha matn qo'shish (masalan: qo'ng'iroq vaqti) |
+| `🔙 Sozlamalarga Qaytish` | Asosiy sozlamalar menyusiga qaytish |
+
+> **Eslatma:** Foydalanuvchi IDsini bilish uchun ulardan `/start` bosishni so'rang yoki Telegram profilida ko'ring. `/cancel` yozib, har qanday kutish holatini bekor qilishingiz mumkin. Qo'shimcha matnni tozalash uchun `/clear` yuboring.
+
+
 ---
 
 ## 3. Webhook (TradingView) Integratsiyasi

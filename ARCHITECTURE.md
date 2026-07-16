@@ -36,8 +36,11 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 ## 7. Muhim Qoidalar (Invariants) 🔐
 - XAU/USD narx ma'lumotlari har doim `GC=F` (Yahoo Finance Gold Futures) tickeridan yuklanadi, chunki `XAUUSD=X` spot delist bo'lgan.
 - Foydalanuvchi umumiy chatda biron instrumentni (masalan: XAU/USD, BTC/USDT) so'rasa, bot dinamik ravishda buni aniqlab real-time narxlarni AI promptiga kiritishi shart.
+- Har qanday so'rov `auth_manager.py` orqali `access_mode` tekshiruvidan o'tishi shart.
 
 ## 8. O'zgarishlar Tarixi
+| Sprint 13 | User Management & Access Control | Foydalanuvchilar ro'yxatga olish, whitelist/blacklist, dinamik admin havola va qo'shimcha matn sozlamalari |
+| Sprint 14 | (Kelgusi) | - |
 | Sana | O'zgarish | Muallif |
 |------|-----------|---------|
 | 2026-05-26 | Umumiy chat fallbackda XAU/USD va boshqa instrumentlar uchun dinamik simbol aniqlash qo'shildi. bot.py dagi 'elif sig:' indent bugi to'g'irlandi. | Antigravity AI |

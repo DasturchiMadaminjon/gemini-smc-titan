@@ -9,6 +9,7 @@ Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, Gemini AI bilan
 - **AI Self-Healing**: Chala qolgan AI tahlillarini avtomatik qayta tiklash.
 - **24/7 Avtonomiya**: AWS EC2 uchun optimallashtirilgan Watchdog tizimi.
 - **TDD Safety**: 100% testlardan o'tgan barqaror kod bazasi.
+- **👤 A'zolar Boshqaruvi**: Foydalanuvchilarni ro'yxatga olish, PUBLIC/RESTRICTED rejimlar, bloklash va whitelist — barchasi visual tugmalar orqali.
 
 ## 🚀 O'rnatish (AWS EC2)
 

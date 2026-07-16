@@ -99,11 +99,26 @@ class DatabaseManager:
                     if "duplicate column name" not in str(e).lower():
                         logger.warning(f"Migratsiya ({col_name}): {e}")
 
+            # ── Foydalanuvchilar jadvali (User Management) ─────────────────
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id   TEXT PRIMARY KEY,
+                    username  TEXT,
+                    first_name TEXT,
+                    last_name  TEXT,
+                    status    TEXT DEFAULT 'PENDING',
+                    role      TEXT DEFAULT 'USER',
+                    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    last_active DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+
             # ✅ SQLite INDEX — Migratsiyadan KEYIN (ustunlar tayyor bo'lganida)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sig_timestamp ON signals(timestamp)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sig_symbol    ON signals(symbol)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_sig_hash      ON signals(sig_hash)")
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_hist_symbol   ON history(symbol)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_status  ON users(status)")
 
             conn.commit()
             logger.info("SQLite Baza ✅ Tayyor: " + self.db_path)
@@ -223,6 +238,98 @@ class DatabaseManager:
         rows = self._execute_query(query, (str(user_id), limit), is_fetch=True)
         if not rows: return []
         return [{'role': r[0], 'content': r[1]} for r in rows]
+
+    # ── Sozlamalar (Key-Value Store) ────────────────────────────────────────────
+    def set_setting(self, key: str, value: str) -> None:
+        """stats jadvalida kalit-qiymat sozlamasini saqlaydi (INSERT yoki REPLACE)."""
+        self._execute_query(
+            "INSERT OR REPLACE INTO stats (key, value) VALUES (?, ?)",
+            (key, str(value))
+        )
+
+    def get_setting(self, key: str, default: str = "") -> str:
+        """stats jadvalidan sozlamani o'qiydi; topilmasa default qaytaradi."""
+        rows = self._execute_query(
+            "SELECT value FROM stats WHERE key = ?",
+            (key,), is_fetch=True
+        )
+        if rows and rows[0]:
+            return rows[0][0]
+        return default
+
+    # ── Foydalanuvchi Boshqaruvi ──────────────────────────────────────────────
+    def register_or_update_user(
+        self,
+        user_id: str,
+        username: str = None,
+        first_name: str = None,
+        last_name: str = None,
+        default_status: str = "ACTIVE"
+    ) -> None:
+        """
+        Foydalanuvchini bazaga qo'shadi yoki mavjud bo'lsa last_active ni yangilaydi.
+        Agar foydalanuvchi allaqachon BLOCKED bo'lsa, statusini o'zgartirmaydi.
+        """
+        uid = str(user_id)
+        existing = self._execute_query(
+            "SELECT status FROM users WHERE user_id = ?",
+            (uid,), is_fetch=True
+        )
+        if existing:
+            # Faqat last_active va username ni yangilash (statusni o'zgartirmaslik)
+            self._execute_query(
+                "UPDATE users SET username=?, first_name=?, last_name=?, "
+                "last_active=CURRENT_TIMESTAMP WHERE user_id=?",
+                (username, first_name, last_name, uid)
+            )
+        else:
+            self._execute_query(
+                "INSERT INTO users (user_id, username, first_name, last_name, status) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (uid, username, first_name, last_name, default_status)
+            )
+
+    def get_user_status(self, user_id: str):
+        """Foydalanuvchi statusini qaytaradi: 'ACTIVE', 'BLOCKED', 'PENDING' yoki None."""
+        rows = self._execute_query(
+            "SELECT status FROM users WHERE user_id = ?",
+            (str(user_id),), is_fetch=True
+        )
+        if rows and rows[0]:
+            return rows[0][0]
+        return None
+
+    def update_user_status(self, user_id: str, status: str) -> None:
+        """Foydalanuvchi statusini yangilaydi: 'ACTIVE', 'BLOCKED', 'PENDING'."""
+        allowed = ('ACTIVE', 'BLOCKED', 'PENDING')
+        if status not in allowed:
+            logger.warning(f"update_user_status: Noto'g'ri status '{status}'. Ruxsat etilganlar: {allowed}")
+            return
+        self._execute_query(
+            "UPDATE users SET status=? WHERE user_id=?",
+            (status, str(user_id))
+        )
+
+    def get_all_users(self) -> list:
+        """Barcha foydalanuvchilar ro'yxatini qaytaradi (lug'atlar ro'yxati)."""
+        rows = self._execute_query(
+            "SELECT user_id, username, first_name, last_name, status, role, joined_at, last_active "
+            "FROM users ORDER BY joined_at DESC",
+            (), is_fetch=True
+        ) or []
+        return [
+            {
+                "user_id":    r[0],
+                "username":   r[1] or "",
+                "first_name": r[2] or "",
+                "last_name":  r[3] or "",
+                "status":     r[4] or "PENDING",
+                "role":       r[5] or "USER",
+                "joined_at":  r[6] or "",
+                "last_active":r[7] or "",
+            }
+            for r in rows
+        ]
 
     # ── Statistika ─────────────────────────────────────────────────────────────
     def get_stats(self, hours=None, limit=100):

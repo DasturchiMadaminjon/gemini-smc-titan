@@ -179,6 +179,36 @@ class TelegramNotifier:
             with open(off_file, 'w') as f: f.write(str(off))
         except: pass
 
+        # ── Foydalanuvchini avtomatik ro'yxatga olish ────────────────────────
+        if uid and uid != '':
+            user_info = m.get('from', cb.get('from', {})) if cb else m.get('from', {})
+            access_mode = self.db.get_setting("access_mode", "PUBLIC")
+            default_st = "ACTIVE" if access_mode == "PUBLIC" else "PENDING"
+            self.db.register_or_update_user(
+                user_id=uid,
+                username=user_info.get('username'),
+                first_name=user_info.get('first_name'),
+                last_name=user_info.get('last_name'),
+                default_status=default_st
+            )
+            # Kirish nazorati (admin har doim o'tadi)
+            if not is_admin:
+                user_status = self.db.get_user_status(uid)
+                is_denied = (user_status == 'BLOCKED') or (
+                    access_mode == 'RESTRICTED' and user_status != 'ACTIVE'
+                )
+                if is_denied:
+                    admin_link = self.db.get_setting("admin_link", "@Madaminjon01")
+                    extra_text = self.db.get_setting("blocked_message_extra", "")
+                    deny_msg = (
+                        "⚠️ <b>Kechirasiz, sizda ushbu botdan foydalanish huquqi yo'q.</b>\n\n"
+                        f"Tizimdan foydalanish va ruxsat olish uchun iltimos admin bilan bog'laning: {admin_link}"
+                    )
+                    if extra_text:
+                        deny_msg += f"\n\n{extra_text}"
+                    await self.send(deny_msg, cid=uid)
+                    return off
+
         # Text to Callback Adapter (Sozlamalar menyusi uchun)
         t = str(m.get('text', ''))
         if not cb:
@@ -236,8 +266,19 @@ class TelegramNotifier:
                 "🇦🇪 UTC+8 (SGT)": "tz_set:8",
                 
                 # ALERTLAR
-                "➕ Yangi Alert": "alert_add",
+                "➡️ Yangi Alert": "alert_add",
                 "🗑 Hammasini O'chir": "alert_clear",
+
+                # FOYDALANUVCHI BOSHQARUVI
+                "👤 A'zolarni Boshqarish": "users_menu",
+                "👥 A'zolar Ro'yxati": "users_list",
+                "🔓 Hammaga Ochiq (PUBLIC)": "access_public",
+                "🔒 Tanlanganlarga (RESTRICTED)": "access_restricted",
+                "➕ Ruxsat Berish": "users_whitelist",
+                "⛔ Bloklash": "users_block",
+                "🔗 Havolani O'zgartirish": "users_change_link",
+                "✍️ Matnni Tahrirlash": "users_change_text",
+                "🔙 Sozlamalarga Qaytish": "back_to_settings",
             }
             if t in text_to_cb:
                 cb = {'id': 'fake_id', 'data': text_to_cb[t], 'from': {'id': uid}}
@@ -607,6 +648,77 @@ class TelegramNotifier:
                 self.user_states.pop(uid, None)
                 current_state = None
 
+            # FSM: Foydalanuvchi boshqaruvi — kutish holatlari (Admin only)
+            USER_MGMT_STATES = {
+                "wait_whitelist_uid", "wait_block_uid",
+                "wait_admin_link", "wait_extra_text"
+            }
+            if t in ("/cancel", "bekor") and current_state in USER_MGMT_STATES:
+                self.user_states.pop(uid, None)
+                await self.send("🚫 Bekor qilindi.", cid=uid)
+                return off
+
+            if current_state == "wait_whitelist_uid" and is_admin and t:
+                if t.strip().isdigit():
+                    target_uid = t.strip()
+                    existing = self.db.get_user_status(target_uid)
+                    if existing is None:
+                        self.db.register_or_update_user(target_uid, default_status="ACTIVE")
+                    else:
+                        self.db.update_user_status(target_uid, "ACTIVE")
+                    self.user_states.pop(uid, None)
+                    await self.send(
+                        f"✅ <b>Foydalanuvchi ruxsatga olindi!</b>\n"
+                        f"ID: <code>{target_uid}</code> → ACTIVE",
+                        cid=uid
+                    )
+                else:
+                    await self.send("❌ Faqat raqamli ID kiriting (masalan: <code>123456789</code>).", cid=uid)
+                return off
+
+            if current_state == "wait_block_uid" and is_admin and t:
+                if t.strip().isdigit():
+                    target_uid = t.strip()
+                    existing = self.db.get_user_status(target_uid)
+                    if existing is None:
+                        self.db.register_or_update_user(target_uid, default_status="BLOCKED")
+                    else:
+                        self.db.update_user_status(target_uid, "BLOCKED")
+                    self.user_states.pop(uid, None)
+                    await self.send(
+                        f"⛔ <b>Foydalanuvchi bloklandi!</b>\n"
+                        f"ID: <code>{target_uid}</code> → BLOCKED",
+                        cid=uid
+                    )
+                else:
+                    await self.send("❌ Faqat raqamli ID kiriting (masalan: <code>123456789</code>).", cid=uid)
+                return off
+
+            if current_state == "wait_admin_link" and is_admin and t:
+                new_link = t.strip()
+                self.db.set_setting("admin_link", new_link)
+                self.user_states.pop(uid, None)
+                await self.send(
+                    f"✅ <b>Admin havola yangilandi!</b>\n"
+                    f"Yangi havola: <b>{new_link}</b>",
+                    cid=uid
+                )
+                return off
+
+            if current_state == "wait_extra_text" and is_admin and t:
+                if t.strip().lower() in ("/clear", "clear"):
+                    self.db.set_setting("blocked_message_extra", "")
+                    await self.send("🗑 Qo'shimcha matn o'chirildi.", cid=uid)
+                else:
+                    self.db.set_setting("blocked_message_extra", t.strip())
+                    await self.send(
+                        f"✅ <b>Qo'shimcha matn saqlandi!</b>\n"
+                        f"Matn: <i>{t.strip()}</i>",
+                        cid=uid
+                    )
+                self.user_states.pop(uid, None)
+                return off
+
             # FSM: Alert — Instrument kutish
             if current_state == "wait_alert_sym" and t:
                 self.temp_data[uid] = {'alert_sym': t.upper().strip()}
@@ -779,9 +891,113 @@ class TelegramNotifier:
                     [{'text': "📋 Bugungi Signallar"}, {'text': "📈 Oylik P&L"}],
                     [{'text': "📜 Signal Tarixi"},   {'text': "🔔 Price Alert"}],
                     [{'text': "🌍 Vaqt Zonasi"},     {'text': ai_btn}],
+                    [{'text': "👤 A'zolarni Boshqarish"}],
                     [{'text': "🔙 Asosiy Menyu"}]
                 ], 'resize_keyboard': True}
                 await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
+
+            elif t == "🔙 Sozlamalarga Qaytish" and is_admin:
+                # A'zolar menyusidan sozlamalarga qaytish
+                ai_enabled = bs.get('settings', {}).get('ai_review_enabled', True)
+                ai_btn = "🤖 AI Xulosa: 🟢 YOQ" if ai_enabled else "🤖 AI Xulosa: 🔴 O'CH"
+                ikb = {'keyboard': [
+                    [{'text': "🪙 Instrumentlar"}, {'text': "⏱ Taymfreym"}],
+                    [{'text': "💰 Risk %"},         {'text': "⚖️ Sifat"}],
+                    [{'text': "📊 Statistika (Win-rate)"}, {'text': "⚖️ Balans"}],
+                    [{'text': "📋 Bugungi Signallar"}, {'text': "📈 Oylik P&L"}],
+                    [{'text': "📜 Signal Tarixi"},   {'text': "🔔 Price Alert"}],
+                    [{'text': "🌍 Vaqt Zonasi"},     {'text': ai_btn}],
+                    [{'text': "👤 A'zolarni Boshqarish"}],
+                    [{'text': "🔙 Asosiy Menyu"}]
+                ], 'resize_keyboard': True}
+                await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
+
+            elif "A'zolarni Boshqarish" in t and is_admin:
+                # 👤 A'zolarni Boshqarish submenyusi
+                cur_mode = self.db.get_setting("access_mode", "PUBLIC")
+                mode_emoji = "🔓" if cur_mode == "PUBLIC" else "🔒"
+                ikb = {'keyboard': [
+                    [{'text': "👥 A'zolar Ro'yxati"}],
+                    [{'text': "🔓 Hammaga Ochiq (PUBLIC)"}, {'text': "🔒 Tanlanganlarga (RESTRICTED)"}],
+                    [{'text': "➕ Ruxsat Berish"}, {'text': "⛔ Bloklash"}],
+                    [{'text': "🔗 Havolani O'zgartirish"}, {'text': "✍️ Matnni Tahrirlash"}],
+                    [{'text': "🔙 Sozlamalarga Qaytish"}]
+                ], 'resize_keyboard': True}
+                await self.send(
+                    f"👤 <b>A'zolarni Boshqarish</b>\n"
+                    f"Joriy kirish rejimi: {mode_emoji} <b>{cur_mode}</b>\n\n"
+                    f"Quyidagilardan birini tanlang:",
+                    cid=uid, kb=json.dumps(ikb)
+                )
+
+            elif "A'zolar Ro'yxati" in t and is_admin:
+                users = self.db.get_all_users()
+                if not users:
+                    await self.send("👥 Hozircha ro'yxatda hech kim yo'q.", cid=uid)
+                else:
+                    status_emoji = {'ACTIVE': '✅', 'BLOCKED': '⛔', 'PENDING': '⏳'}
+                    lines = ["👥 <b>Foydalanuvchilar Ro'yxati</b>\n"]
+                    for i, u_rec in enumerate(users[:40], 1):  # Max 40 ta
+                        em = status_emoji.get(u_rec['status'], '❓')
+                        uname = f"@{u_rec['username']}" if u_rec['username'] else u_rec['first_name'] or "Noma'lum"
+                        lines.append(
+                            f"{i}. {em} <code>{u_rec['user_id']}</code> — {uname} [{u_rec['status']}]"
+                        )
+                    lines.append(f"\n<i>Jami: {len(users)} ta foydalanuvchi</i>")
+                    await self.send("\n".join(lines), cid=uid)
+
+            elif "Hammaga Ochiq" in t and is_admin:
+                self.db.set_setting("access_mode", "PUBLIC")
+                await self.send(
+                    "🔓 <b>Hammaga Ochiq (PUBLIC)</b> rejimi faollashtirildi.\n"
+                    "Yangi foydalanuvchilar avtomatik ACTIVE bo'ladi.",
+                    cid=uid
+                )
+
+            elif "Tanlanganlarga" in t and is_admin:
+                self.db.set_setting("access_mode", "RESTRICTED")
+                await self.send(
+                    "🔒 <b>Tanlanganlarga Ochiq (RESTRICTED)</b> rejimi faollashtirildi.\n"
+                    "Faqat siz ruxsat bergan foydalanuvchilar kira oladi.",
+                    cid=uid
+                )
+
+            elif "Ruxsat Berish" in t and is_admin:
+                self.user_states[uid] = "wait_whitelist_uid"
+                await self.send(
+                    "➕ Ruxsat bermoqchi bo'lgan foydalanuvchining <b>ID raqamini</b> yuboring:\n"
+                    "<i>(Bekor qilish uchun /cancel yozing)</i>",
+                    cid=uid
+                )
+
+            elif "⛔ Bloklash" in t and is_admin:
+                self.user_states[uid] = "wait_block_uid"
+                await self.send(
+                    "⛔ Bloklash kerak bo'lgan foydalanuvchining <b>ID raqamini</b> yuboring:\n"
+                    "<i>(Bekor qilish uchun /cancel yozing)</i>",
+                    cid=uid
+                )
+
+            elif "Havolani O'zgartirish" in t and is_admin:
+                cur_link = self.db.get_setting("admin_link", "@Madaminjon01")
+                self.user_states[uid] = "wait_admin_link"
+                await self.send(
+                    f"🔗 Joriy havola: <b>{cur_link}</b>\n\n"
+                    f"Yangi admin havolasini yuboring (masalan: @YangiAdmin yoki t.me/yangi):\n"
+                    f"<i>(Bekor qilish uchun /cancel yozing)</i>",
+                    cid=uid
+                )
+
+            elif "Matnni Tahrirlash" in t and is_admin:
+                cur_extra = self.db.get_setting("blocked_message_extra", "")
+                self.user_states[uid] = "wait_extra_text"
+                display = f"\"<i>{cur_extra}</i>\"" if cur_extra else "<i>(bo'sh)</i>"
+                await self.send(
+                    f"✍️ Joriy qo'shimcha matn: {display}\n\n"
+                    f"Yangi qo'shimcha matn yuboring (o'chirish uchun /clear yozing):\n"
+                    f"<i>(Bekor qilish uchun /cancel yozing)</i>",
+                    cid=uid
+                )
 
             elif "Jonli SMC Trener" in t:
                 self.user_states[uid] = "choosing_module"
