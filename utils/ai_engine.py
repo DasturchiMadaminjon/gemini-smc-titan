@@ -200,7 +200,7 @@ class AIEngine:
             })
         messages[0]["content"].append({"type": "text", "text": prompt})
         response = await self.claude_client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-sonnet-4-6",
             max_tokens=8192,
             system=full_instruction or "Siz professional moliyaviy tahlilchi va SMC treyderini yordamchisisiz.",
             messages=messages
