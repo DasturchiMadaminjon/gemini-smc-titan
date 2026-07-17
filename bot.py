@@ -519,6 +519,7 @@ class GeminiBot:
                             }
                             # ✅ Grafik rasmini yaratish
                             from core.indicator import GeminiIndicator
+                            chart_bytes = GeminiIndicator(self.cfg).draw_chart_bytes(df, s, sig)
                             provider = self.db.get_setting("ai_provider", "GEMINI")
                             is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(sig_data, image_bytes=chart_bytes, provider=provider)
                             
