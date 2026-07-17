@@ -262,7 +262,9 @@ class AIEngine:
 
 
 
-    async def evaluate_trade_signal(self, signal_data: dict, image_bytes: bytes = None) -> tuple[bool, str]:
+    async def evaluate_trade_signal(
+        self, signal_data: dict, image_bytes: bytes = None, provider: str = "GEMINI"
+    ) -> tuple[bool, str]:
         """
         Signalni SMC bo'yicha professional tahlil qilish.
         """
@@ -288,7 +290,7 @@ class AIEngine:
         )
         
         # evaluator personasini ishlatamiz
-        resp = await self.get_analysis(prompt, context_type="evaluator", image_bytes=image_bytes)
+        resp = await self.get_analysis(prompt, context_type="evaluator", image_bytes=image_bytes, provider=provider)
         
         # Tasdiqlash mantiqi (stricter & safer)
         # Xabarning faqat dastlabki 100 ta belgisini tekshiramiz (sababi verdict birinchi qatorda bo'lishi shart)

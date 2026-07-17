@@ -519,8 +519,8 @@ class GeminiBot:
                             }
                             # ✅ Grafik rasmini yaratish
                             from core.indicator import GeminiIndicator
-                            chart_bytes = GeminiIndicator(self.cfg).draw_chart_bytes(df, s, sig)
-                            is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(sig_data, image_bytes=chart_bytes)
+                            provider = self.db.get_setting("ai_provider", "GEMINI")
+                            is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(sig_data, image_bytes=chart_bytes, provider=provider)
                             
                             import html
                             safe_ai_reason = html.escape(ai_reason) if ai_reason else ""
@@ -719,7 +719,8 @@ class GeminiBot:
                                 
                                 if ai_review_enabled:
                                     logger.info(f"🤖 Webhook signal AI tahliliga yuborilmoqda: {sym}")
-                                    is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(data)
+                                    provider = self.db.get_setting("ai_provider", "GEMINI")
+                                    is_appr, ai_reason = await self.telegram.ai.evaluate_trade_signal(data, provider=provider)
                                     if not is_appr:
                                         msg = f"❌ <b>AI RAD ETDI ({sym}):</b>\n\n{ai_reason}\n\n<i>Signal bekor qilindi (Savdoga kiritilmadi).</i>"
                                         await self.telegram.send(msg)
