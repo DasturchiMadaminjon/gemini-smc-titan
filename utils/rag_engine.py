@@ -190,25 +190,45 @@ class RAGEngine:
         self.documents = []
         self.embeddings = []
         
-        # Batch embedding using new SDK
+        # Batch embedding using new SDK with key rotation and retries
         for i, chunk in enumerate(all_chunks):
-            try:
-                # google-genai SDK embedding
-                res = self.client.models.embed_content(
-                    model="models/gemini-embedding-001", 
-                    contents=chunk,
-                    config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
-                )
-                self.embeddings.append(np.array(res.embeddings[0].values))
-                self.documents.append(chunk)
+            success = False
+            max_attempts = max(3, len(self.keys) * 2)
+            for attempt in range(max_attempts):
+                try:
+                    res = self.client.models.embed_content(
+                        model="models/gemini-embedding-001", 
+                        contents=chunk,
+                        config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT")
+                    )
+                    self.embeddings.append(np.array(res.embeddings[0].values))
+                    self.documents.append(chunk)
+                    success = True
+                    break
+                except Exception as e:
+                    err = str(e).upper()
+                    logger.warning(f"Embedding attempt {attempt+1}/{max_attempts} failed: {e}")
+                    
+                    if "403" in err or "PERMISSION_DENIED" in err or "429" in err or "EXHAUSTED" in err:
+                        if self._rotate_key():
+                            logger.info("Rotated to next key for embedding.")
+                            await asyncio.sleep(0.5)
+                            continue
+                    
+                    wait_time = min(30, (attempt + 1) * 3)
+                    logger.warning(f"Sleeping for {wait_time}s before retry...")
+                    await asyncio.sleep(wait_time)
+            
+            if not success:
+                logger.error(f"Failed to generate embedding for chunk {i+1} after all attempts. Skipping.")
                 
-                if i % 10 == 0: logger.info(f"Indexing progress: {i}/{len(all_chunks)}")
-                await asyncio.sleep(0.5) # Rate limit protection
-            except Exception as e:
-                logger.error(f"Embedding error: {e}")
+            if i % 10 == 0: 
+                logger.info(f"Indexing progress: {i}/{len(all_chunks)}")
+            await asyncio.sleep(0.3) # Rate limit protection
 
         self.save_index()
         return len(self.documents)
+
 
     def search(self, query, top_k=8):
         """Vektorli qidiruv va fayllar ro'yxati nazorati (Fix 404)"""
