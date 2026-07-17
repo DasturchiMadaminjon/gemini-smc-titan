@@ -64,3 +64,46 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 
 ---
 *Titan V27.2 - Barqarorlik, Professionalizm va Yuqori Sifat uchun yaratilgan.*
+
+---
+
+## 9. RAG (Bilim Bazasi) Tizimi 📚
+
+### Arxitektura:
+| Komponent | Fayl | Vazifa |
+|---|---|---|
+| Bilim fayllari | `bilim_bazasi/` | PDF, TXT, DOCX, XLSX kitoblar |
+| Vektorli indeks | `vector_db/index.json` | Matn bo'laklari + embedding vektorlari |
+| Indeks qurilishi | `build_vectors.py` | `python3 build_vectors.py` buyruq bilan yangilanadi |
+| Qidiruv motori | `utils/rag_engine.py` | Cosine similarity orqali eng yaqin matnni topadi |
+| AI bilan bog'lanish | `utils/ai_engine.py → get_analysis()` | `rag_text` → `full_instruction` system prompt sifatida uzatiladi |
+
+### Ishlash mantig'i:
+```
+Foydalanuvchi savol beradi
+    → rag.search(query) → Kitob ichidan eng yaqin matn bo'laklari topiladi
+    → full_instruction = persona + "\n\nKontekst: " + rag_text
+    → Bu system_instruction sifatida Claude yoki Gemini'ga uzatiladi
+    → AI kitob asosida javob beradi
+```
+
+### ⚠️ Muhim: Skanerlangan PDF (Scan PDF) muammosi
+- `SMC (TRADING DARSLIKLAR).pdf` va `Simple-Trading-Book-2.pdf` **rasm-PDF** formatida — `PyPDF2` ulardan matn o'qiy olmaydi.
+- **Yechim:** Kitobning matnli (Searchable PDF) versiyasini yoki `.txt` formatini yuklang.
+- **Tekshirish:** PDF dagi so'zlarni sichqoncha bilan belgilab nusxalab bo'lsa → matnli. Bo'lmasa → skanerlangan rasm.
+
+### Bilim bazasini yangilash tartibi:
+```bash
+# 1. Yangi kitobni bilim_bazasi papkasiga ko'chiring
+cp yangi_kitob.pdf ~/temp_master_zip/bilim_bazasi/
+
+# 2. Indeksni qayta quring
+cd ~/temp_master_zip
+source venv/bin/activate
+python3 build_vectors.py
+
+# 3. Botni qayta ishga tushiring
+pkill -f watchdog.py && sleep 2
+screen -S titan_bot -d -m bash -c "source venv/bin/activate && python3 watchdog.py"
+```
+

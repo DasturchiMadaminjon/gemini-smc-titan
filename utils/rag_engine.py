@@ -87,6 +87,7 @@ class RAGEngine:
         text_len = len(text)
         
         while start < text_len:
+            old_start = start
             end = start + chunk_size
             if end >= text_len:
                 chunk = text[start:].strip()
@@ -99,9 +100,14 @@ class RAGEngine:
             
             chunk = text[start:end].strip()
             if len(chunk) > 20: chunks.append(chunk)
+            
             start = end - overlap
+            # Cheksiz aylanib qolishni oldini olish (agar qadam orqaga yoki joyida qolsa)
+            if start <= old_start:
+                start = old_start + (chunk_size - overlap)
                 
         return chunks
+
 
     def extract_text_advanced(self, file_path):
         """Fayldan matnni 100% aniqlikda chiqarish (PDF, Word, Excel, JSON, CSV, TXT)"""
@@ -112,12 +118,29 @@ class RAGEngine:
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     text = f.read()
             elif ext == '.pdf':
-                import PyPDF2
-                with open(file_path, 'rb') as f:
-                    reader = PyPDF2.PdfReader(f)
-                    for page in reader.pages:
-                        page_text = page.extract_text()
-                        if page_text: text += page_text + "\n"
+                # 1-urinish: pypdf (yangi, zamonaviy)
+                try:
+                    from pypdf import PdfReader as PyPdfReader
+                    with open(file_path, 'rb') as f:
+                        reader = PyPdfReader(f)
+                        for page in reader.pages:
+                            page_text = page.extract_text()
+                            if page_text: text += page_text + "\n"
+                except ImportError:
+                    pass
+                # 2-urinish: PyPDF2 (eski, qo'shimcha sinash)
+                if not text.strip():
+                    try:
+                        import PyPDF2
+                        with open(file_path, 'rb') as f:
+                            reader = PyPDF2.PdfReader(f)
+                            for page in reader.pages:
+                                page_text = page.extract_text()
+                                if page_text: text += page_text + "\n"
+                    except Exception:
+                        pass
+                if not text.strip():
+                    logger.warning(f"[RAG] '{os.path.basename(file_path)}' skanerlangan rasm-PDF bo'lishi mumkin — matn chiqmadi.")
             elif ext == '.docx':
                 import docx
                 doc = docx.Document(file_path)
@@ -142,6 +165,7 @@ class RAGEngine:
         except Exception as e:
             logger.error(f"Extraction error ({file_path}): {e}")
         return text
+
 
     async def build_index(self, force=False):
         """Barcha kitoblarni o'qib, yangi index yig'ish"""
