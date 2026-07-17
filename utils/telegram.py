@@ -41,8 +41,14 @@ class TelegramNotifier:
         self.onboarding_done: set = set()  # Birinchi marta /start bosganlar
     
     async def get_ai_analysis(self, prompt, uid, context="technical", image_data=None):
-        """AI Engine ga tahlil so'rovini yuborish (Wrapper)."""
-        return await self.ai.get_analysis(prompt, context_type=context, image_bytes=image_data)
+        """AI Engine ga tahlil so'rovini yuborish (Wrapper).
+        
+        DBdan ai_provider ni o'qib dinamik ravishda Gemini yoki Claude tanlab chaqiradi.
+        """
+        provider = self.db.get_setting("ai_provider", "GEMINI")
+        return await self.ai.get_analysis(
+            prompt, context_type=context, image_bytes=image_data, provider=provider
+        )
 
     async def get_session(self):
         if self._session is None or self._session.closed:
@@ -226,7 +232,9 @@ class TelegramNotifier:
                 "🌍 Vaqt Zonasi": "tz_menu",
                 "🤖 AI Xulosa: 🟢 YOQ": "toggle_ai_review",
                 "🤖 AI Xulosa: 🔴 O'CH": "toggle_ai_review",
-                
+                "🧠 Provider: 🟢 GEMINI": "toggle_ai_provider",
+                "🧠 Provider: 🟣 CLAUDE": "toggle_ai_provider",
+
                 # SIFAT
                 "🟢 Sifat: 30%": "setqual_30.0",
                 "🟡 Sifat: 50%": "setqual_50.0",
@@ -470,6 +478,20 @@ class TelegramNotifier:
                 from utils.persistence import save_state
                 save_state(bs)
                 await self.send(f"🤖 AI Xulosasi <b>{status}</b>.", cid=uid)
+
+            elif d == "toggle_ai_provider" and is_admin:
+                current_provider = self.db.get_setting("ai_provider", "GEMINI")
+                new_provider = "CLAUDE" if current_provider == "GEMINI" else "GEMINI"
+                self.db.set_setting("ai_provider", new_provider)
+                emoji = "🟢" if new_provider == "GEMINI" else "🟣"
+                provider_name = "Google Gemini 2.5 Flash" if new_provider == "GEMINI" else "Anthropic Claude 3.5 Sonnet"
+                await self.send(
+                    f"🧠 <b>AI Provayder o'zgartirildi!</b>\n\n"
+                    f"{emoji} Yangi provayder: <b>{new_provider}</b>\n"
+                    f"📦 Model: <code>{provider_name}</code>\n\n"
+                    f"ℹ️ Keyingi AI tahlildan boshlab kuchga kiradi.",
+                    cid=uid
+                )
 
             elif d == "today_signals":
                 sigs = self.db.get_today_signals()
@@ -873,6 +895,9 @@ class TelegramNotifier:
             if "Sozlamalar" in t and is_admin:
                 ai_enabled = bs.get('settings', {}).get('ai_review_enabled', True)
                 ai_btn = "🤖 AI Xulosa: 🟢 YOQ" if ai_enabled else "🤖 AI Xulosa: 🔴 O'CH"
+                ai_provider = self.db.get_setting("ai_provider", "GEMINI")
+                ai_provider_emoji = "🟢" if ai_provider == "GEMINI" else "🟣"
+                ai_provider_btn = f"🧠 Provider: {ai_provider_emoji} {ai_provider}"
                 ikb = {'keyboard': [
                     [{'text': "🪙 Instrumentlar"}, {'text': "⏱ Taymfreym"}],
                     [{'text': "💰 Risk %"},         {'text': "⚙️ Sifat"}],
@@ -880,7 +905,7 @@ class TelegramNotifier:
                     [{'text': "📋 Bugungi Signallar"}, {'text': "📈 Oylik P&L"}],
                     [{'text': "📜 Signal Tarixi"},   {'text': "🔔 Price Alert"}],
                     [{'text': "🌍 Vaqt Zonasi"},     {'text': ai_btn}],
-                    [{'text': "👤 A'zolarni Boshqarish"}],
+                    [{'text': ai_provider_btn},     {'text': "👤 A'zolarni Boshqarish"}],
                     [{'text': "🔙 Asosiy Menyu"}]
                 ], 'resize_keyboard': True}
                 await self.send("⚙️ <b>Bot Sozlamalari:</b>", cid=uid, kb=json.dumps(ikb))
@@ -889,6 +914,9 @@ class TelegramNotifier:
                 # A'zolar menyusidan sozlamalarga qaytish
                 ai_enabled = bs.get('settings', {}).get('ai_review_enabled', True)
                 ai_btn = "🤖 AI Xulosa: 🟢 YOQ" if ai_enabled else "🤖 AI Xulosa: 🔴 O'CH"
+                ai_provider = self.db.get_setting("ai_provider", "GEMINI")
+                ai_provider_emoji = "🟢" if ai_provider == "GEMINI" else "🟣"
+                ai_provider_btn = f"🧠 AI: {ai_provider_emoji} {ai_provider}"
                 ikb = {'keyboard': [
                     [{'text': "🪙 Instrumentlar"}, {'text': "⏱ Taymfreym"}],
                     [{'text': "💰 Risk %"},         {'text': "⚖️ Sifat"}],

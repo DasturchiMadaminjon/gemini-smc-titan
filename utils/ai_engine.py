@@ -8,6 +8,13 @@ from google.genai import types
 from datetime import datetime, timezone
 from utils.price_fetcher import get_current_price
 
+# Claude kutubxonasini ixtiyoriy import (yo'q bo'lsa ham bot ishlaydi)
+try:
+    import anthropic as _anthropic
+    _CLAUDE_AVAILABLE = True
+except ImportError:
+    _CLAUDE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -29,6 +36,17 @@ class AIEngine:
         self.model_name = model_name
         self.client = None
         self.setup_client()
+
+        # ── Claude integratsiyasi (ixtiyoriy) ──────────────────────────────
+        self.claude_api_key = os.getenv("CLAUDE_API_KEY", "").strip()
+        self.claude_client = None
+        if _CLAUDE_AVAILABLE and self.claude_api_key:
+            try:
+                self.claude_client = _anthropic.AsyncAnthropic(api_key=self.claude_api_key)
+                logger.info("[AI] Claude 3.5 Sonnet mijozi muvaffaqiyatli sozlandi.")
+            except Exception as e:
+                logger.warning(f"[AI] Claude mijozi sozlanmadi: {e}")
+                self.claude_client = None
 
         # RAG moduli bot.py tomonidan ulanadi
         self.rag = None
@@ -81,14 +99,119 @@ class AIEngine:
             return True
         return False
 
-    async def get_analysis(
-        self, prompt: str, context_type: str = "technical", image_bytes: bytes = None
+    async def _get_gemini_analysis(
+        self, prompt: str, context_type: str = "technical", image_bytes: bytes = None,
+        full_instruction: str = "", contents: list = None
     ) -> str:
-        # Debug log: AI Engine rasm qabul qildimi?
-        logger.info(f"[ENGINE-DEBUG] context={context_type}, img_bytes_received={image_bytes is not None}")
-        
-        if not self.client:
-            return "❌ API kalitlari yo'q."
+        """Gemini orqali tahlil. Bu mavjud Gemini logikasi (o'zgartirilmagan)."""
+        if contents is None:
+            contents = [prompt]
+        # Barcha API kalitlarni aylanish
+        for attempt in range(len(self.api_keys)):
+            try:
+                tools = []
+                if context_type in ['chat', 'fundamental', 'mentor_lessons', 'mentor_qa', 'mentor_live_examples']:
+                    tools.append(types.Tool(google_search=types.GoogleSearch()))
+                config = types.GenerateContentConfig(
+                    system_instruction=full_instruction + " MUHIM: Tahlilni to'liq yakunlang va eng oxirida [TAMOM] so'zini yozing.",
+                    temperature=0.3,
+                    max_output_tokens=8192,
+                    tools=tools if tools else None,
+                    safety_settings=[
+                        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                    ]
+                )
+                accumulated_text = ""
+                max_inner_retries = 3
+                for inner_attempt in range(max_inner_retries):
+                    current_contents = contents.copy()
+                    if accumulated_text:
+                        current_contents.append(f"Oldingi qism:\n{accumulated_text}\n\nDavom eting:")
+                    response = await asyncio.to_thread(
+                        self.client.models.generate_content,
+                        model=self.model_name,
+                        contents=current_contents,
+                        config=config
+                    )
+                    if not response.text:
+                        break
+                    accumulated_text += response.text
+                    candidate = response.candidates[0] if getattr(response, 'candidates', None) else None
+                    finish_reason = str(getattr(candidate, 'finish_reason', '')).upper()
+                    if finish_reason and "MAX_OUTPUT_TOKENS" not in finish_reason:
+                        break
+                    import re as _re
+                    acc_upper = accumulated_text.strip().upper()
+                    if "[TAMOM]" in acc_upper or _re.search(r'\bTAMOM\b\s*[.!]*$', acc_upper):
+                        break
+                    await asyncio.sleep(0.5)
+                import re as _re
+                return _re.sub(r'(?i)\s*\[?TAMOM\]?[.!]*\s*$', '', accumulated_text).strip()
+            except Exception as e:
+                err = str(e).upper()
+                if "403" in err or "PERMISSION_DENIED" in err or "LEAKED" in err:
+                    if self._rotate_key():
+                        continue
+                    return f"❌ Barcha AI kalitlar bloklangan: {err[:50]}"
+                if "429" in err or "RESOURCE EXHAUSTED" in err or "LIMIT" in err:
+                    if self._rotate_key():
+                        continue
+                    return f"❌ Barcha AI kalitlar limitga yetdi."
+                if "GOOGLE_SEARCH" in err or "400" in err or "INVALID_ARGUMENT" in err:
+                    try:
+                        config_no_search = types.GenerateContentConfig(
+                            system_instruction=full_instruction, temperature=0.3,
+                            max_output_tokens=8192,
+                            safety_settings=[
+                                types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                                types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
+                            ]
+                        )
+                        response = await asyncio.to_thread(
+                            self.client.models.generate_content,
+                            model=self.model_name, contents=contents, config=config_no_search
+                        )
+                        return response.text
+                    except Exception as e2:
+                        logger.error(f"Gemini fallback xatosi: {str(e2)[:50]}")
+                return f"❌ AI xatoligi: {str(e)[:100]}"
+        return "❌ Barcha API kalitlar band yoki yaroqsiz."
+
+    async def _get_claude_analysis(
+        self, prompt: str, context_type: str = "technical",
+        image_bytes: bytes = None, full_instruction: str = ""
+    ) -> str:
+        """Claude 3.5 Sonnet orqali tahlil (ixtiyoriy provayder)."""
+        if not self.claude_client:
+            raise RuntimeError("Claude mijozi sozlanmagan yoki kalit yo'q.")
+        messages = [{"role": "user", "content": []}]
+        if image_bytes:
+            mime = "image/png" if image_bytes.startswith(b'\x89PNG') else "image/jpeg"
+            import base64 as _b64
+            messages[0]["content"].append({
+                "type": "image",
+                "source": {"type": "base64", "media_type": mime,
+                           "data": _b64.b64encode(image_bytes).decode()}
+            })
+        messages[0]["content"].append({"type": "text", "text": prompt})
+        response = await self.claude_client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=8192,
+            system=full_instruction or "Siz professional moliyaviy tahlilchi va SMC treyderini yordamchisisiz.",
+            messages=messages
+        )
+        return response.content[0].text
+
+    async def get_analysis(
+        self, prompt: str, context_type: str = "technical",
+        image_bytes: bytes = None, provider: str = "GEMINI"
+    ) -> str:
+        logger.info(f"[ENGINE] context={context_type}, provider={provider}, img={image_bytes is not None}")
 
         persona = self.personas.get(context_type, self.personas["chat"])
         rag_text = ""
@@ -104,120 +227,40 @@ class AIEngine:
                 types.Part.from_bytes(data=image_bytes, mime_type=mime)
             )
 
-        # Barcha API kalitlarni aylanish
-        for attempt in range(len(self.api_keys)):
+        # ── PROVIDER TANLASH MANTIQI ────────────────────────────────────────
+        use_claude = (
+            provider == "CLAUDE"
+            and self.claude_api_key
+            and self.claude_client is not None
+        )
+
+        if use_claude:
             try:
-                # 1. Google Search bilan urinib ko'rish
-                # SDK muvofiqligi uchun eng sodda va xavfsiz konfiguratsiya
-                # Qat'iy konfiguratsiya
-                tools = []
-                if context_type in ['chat', 'fundamental', 'mentor_lessons', 'mentor_qa', 'mentor_live_examples']:
-                    tools.append(types.Tool(google_search=types.GoogleSearch()))
-
-                config = types.GenerateContentConfig(
-                    system_instruction=full_instruction + " MUHIM: Tahlilni to'liq yakunlang va eng oxirida [TAMOM] so'zini yozing.",
-                    temperature=0.3, # Yanada barqaror javob uchun
-                    max_output_tokens=8192,
-                    tools=tools if tools else None,
-                    safety_settings=[
-                        types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-                        types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-                    ]
+                result = await self._get_claude_analysis(
+                    prompt=prompt, context_type=context_type,
+                    image_bytes=image_bytes, full_instruction=full_instruction
                 )
-
-                # Chala xabarlarni tutib olish va davom ettirish uchun mantiq
-                accumulated_text = ""
-                max_inner_retries = 3
-                
-                for inner_attempt in range(max_inner_retries):
-                    # Agar bu davom ettirish bo'lsa, kontekstga oldingi qismni qo'shamiz
-                    current_contents = contents.copy()
-                    if accumulated_text:
-                        current_contents.append(f"Oldingi qism:\n{accumulated_text}\n\nDavom eting:")
-
-                    response = await asyncio.to_thread(
-                        self.client.models.generate_content,
-                        model=self.model_name,
-                        contents=current_contents,
-                        config=config
-                    )
-                    
-                    if not response.text:
-                        break
-                    
-                    new_text = response.text
-                    accumulated_text += new_text
-                    
-                    # Agar finish_reason MAX_OUTPUT_TOKENS bo'lmasa va model tabiiy to'xtagan bo'lsa, davom ettirmaymiz
-                    candidate = response.candidates[0] if getattr(response, 'candidates', None) else None
-                    finish_reason = str(getattr(candidate, 'finish_reason', '')).upper()
-                    if finish_reason and "MAX_OUTPUT_TOKENS" not in finish_reason:
-                        break
-
-                    # TAMOM belgisi kelganini tekshirish
-                    import re as _re
-                    acc_upper = accumulated_text.strip().upper()
-                    if "[TAMOM]" in acc_upper or _re.search(r'\bTAMOM\b\s*[.!]*$', acc_upper):
-                        break
-                    
-                    logger.info(f"AI javobi chala (Attempt {inner_attempt+1}). Davomini so'raymiz...")
-                    await asyncio.sleep(0.5)
-
-                # Yakuniy tozalash
-                import re as _re
-                final_res = _re.sub(r'(?i)\s*\[?TAMOM\]?[.!]*\s*$', '', accumulated_text).strip()
-                return final_res
+                logger.info("[ENGINE] Claude javobi muvaffaqiyatli qaytdi.")
+                return result
             except Exception as e:
-                err = str(e).upper()
-                
-                # 1. Eng muhimi: Kalit bloklansa, zudlik bilan rotate qilish
-                if "403" in err or "PERMISSION_DENIED" in err or "LEAKED" in err:
-                    logger.error(f"⚠️ API Key bloklangan (Index {self.current_key_index}): {err[:100]}")
-                    if self._rotate_key():
-                        continue
-                    else:
-                        return f"❌ Barcha AI kalitlar bloklangan: {err[:50]}"
-                
-                # 2. Limit xatolari bo'lsa ham rotate qilish
-                if "429" in err or "RESOURCE EXHAUSTED" in err or "LIMIT" in err:
-                    logger.warning(f"⚠️ API Key limitga yetdi (Index {self.current_key_index}): {err[:50]}")
-                    if self._rotate_key():
-                        continue
-                    else:
-                        return f"❌ Barcha AI kalitlar limitga yetdi."
+                logger.error(f"[ENGINE] Claude xatosi, Gemini ga o'tilmoqda: {e}")
+                # AUTO-FALLBACK: Claude xatoga uchrasa Gemini ishga tushadi
 
-                # 3. Google Search bilan bog'liq xatolar uchun fallback
-                if "GOOGLE_SEARCH" in err or "400" in err or "INVALID_ARGUMENT" in err:
-                    try:
-                        logger.warning(f"Google Search fallback (Attempt {attempt+1})")
-                        config_no_search = types.GenerateContentConfig(
-                            system_instruction=full_instruction, 
-                            temperature=0.3,
-                            max_output_tokens=8192,
-                            safety_settings=[
-                                types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
-                                types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
-                                types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-                                types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-                            ]
-                        )
-                        response = await asyncio.to_thread(
-                            self.client.models.generate_content,
-                            model=self.model_name,
-                            contents=contents,
-                            config=config_no_search
-                        )
-                        return response.text
-                    except Exception as e2:
-                        err = str(e2).upper()
-                        logger.error(f"Fallback xatosi: {err[:50]}")
-                
-                # Boshqa xatoliklar bo'lsa qaytaramiz (agar barcha looplar tugasa)
-                return f"❌ AI xatoligi: {str(e)[:100]}"
-                
-        return "❌ Barcha API kalitlar band yoki yaroqsiz."
+        # Gemini (default yoki fallback)
+        if not self.client:
+            return "❌ API kalitlari yo'q."
+        try:
+            return await self._get_gemini_analysis(
+                prompt=prompt, context_type=context_type,
+                image_bytes=image_bytes,
+                full_instruction=full_instruction,
+                contents=contents
+            )
+        except Exception as e:
+            logger.error(f"[ENGINE] Gemini ham xatoga uchradi: {e}")
+            return f"❌ AI xatoligi: {str(e)[:100]}"
+
+
 
     async def evaluate_trade_signal(self, signal_data: dict, image_bytes: bytes = None) -> tuple[bool, str]:
         """

@@ -10,6 +10,19 @@ Titan V27.2 modulli va asinxron arxitekturaga ega bo'lib, Python 3.9+ va `asynci
 - **`utils/exchange.py`**: Ma'lumotlar manbasi. `yfinance` orqali bloklanmagan holda ma'lumotlarni asinxron yuklaydi.
 - **`core/manager.py`**: Bitimlarni boshqarish. Risk management, position sizing va natijalarni nazorat qilish.
 
+
+## 3.1 AI Provayder Arxitekturasi (Sprint 14)
+Tizim ikkita AI provayderini qo'llab-quvvatlaydi:
+- **Gemini** (default) — GEMINI_API_KEYS orqali
+- **Claude** (ixtiyoriy) — CLAUDE_API_KEY orqali
+
+Fail-safe kafolati: Claude xatoga uchrasa yoki kalit yo'q bo'lsa — Gemini avtomatik ishga tushadi.
+
+| O'zgaruvchi | Majburiy | Tavsif |
+|-------------|----------|--------|
+| GEMINI_API_KEYS | Ha | Vergul bilan ajratilgan Gemini kalitlar |
+| CLAUDE_API_KEY | Yo'q | Anthropic Claude kaliti (ixtiyoriy) |
+
 ## 3. Asinxron Butunlik (Async Integrity) ⚡
 Tizimning barcha CPU-intensive va I/O amallari blocking bo'lmasligi shart:
 - Tarmoq so'rovlari (`yfinance`) alohida `run_in_executor` poolda bajariladi.
@@ -27,6 +40,7 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 - **Deduplication**: Bir xil signallar 30 daqiqa ichida qayta yuborilishi bloklanadi.
 - **Smart Chunking**: Telegram'ning 4000 belgilik limiti uchun aqlli (abzaslar bo'yicha) bo'laklash tizimi.
 - **HTML Sanitization**: AI javoblaridagi maxsus belgilarni (&, <, >) Telegram HTML parseri uchun avtomatik escape qilish.
+- **AI Fail-Safe Fallback**: Claude xatoga uchrasa, Gemini ga avtomatik o'tish (Sprint 14).
 - **AI Self-Healing**: AI javobi chala qolsa (missing [TAMOM]), uni avtomatik aniqlash va qayta generatsiya qilish.
 
 ## 6. Logging va Monitoring 🪵
@@ -40,7 +54,7 @@ Har bir yangi funksiya quyidagi qatlamlar orqali o'tadi:
 
 ## 8. O'zgarishlar Tarixi
 | Sprint 13 | User Management & Access Control | Foydalanuvchilar ro'yxatga olish, whitelist/blacklist, dinamik admin havola va qo'shimcha matn sozlamalari |
-| Sprint 14 | (Kelgusi) | - |
+| 2026-07-17 | Sprint 14 | Dinamik AI Provayder: Gemini/Claude almashish, fail-safe fallback, Telegram tugmasi |
 | Sana | O'zgarish | Muallif |
 |------|-----------|---------|
 | 2026-05-26 | Umumiy chat fallbackda XAU/USD va boshqa instrumentlar uchun dinamik simbol aniqlash qo'shildi. bot.py dagi 'elif sig:' indent bugi to'g'irlandi. | Antigravity AI |

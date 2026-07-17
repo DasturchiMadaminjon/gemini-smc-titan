@@ -1,15 +1,16 @@
-# Titan V27.2 SMC Trading Bot 🤖💹
+# Titan V27.2 SMC Trading Bot
 
-Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, Gemini AI bilan tasdiqlanadigan avtonom trading bot.
+Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, **Gemini yoki Claude AI** bilan tasdiqlanadigan avtonom trading bot.
 
-## ✨ Xususiyatlari
+## Xususiyatlari
 - **Professional SMC Tahlil**: BOS, OrderBlock, FVG va Liquidity.
-- **AI Validation**: Gemini Vision orqali grafikni "ko'rib" qaror qabul qilish.
-- **Resilient Messaging**: "Smart Chunking" va "HTML Sanitization" orqali xabarlarning uzilishlarsiz yetib borishi.
+- **Dual AI Provayder**: Gemini Flash yoki Claude Sonnet — tugma orqali almashish mumkin. (Sprint 14)
+- **AI Fail-Safe Fallback**: Claude xatoga uchrasa Gemini avtomatik ishga tushadi.
+- **Resilient Messaging**: "Smart Chunking" va "HTML Sanitization".
 - **AI Self-Healing**: Chala qolgan AI tahlillarini avtomatik qayta tiklash.
 - **24/7 Avtonomiya**: AWS EC2 uchun optimallashtirilgan Watchdog tizimi.
 - **TDD Safety**: 100% testlardan o'tgan barqaror kod bazasi.
-- **👤 A'zolar Boshqaruvi**: Foydalanuvchilarni ro'yxatga olish, PUBLIC/RESTRICTED rejimlar, bloklash va whitelist — barchasi visual tugmalar orqali.
+- **A'zolar Boshqaruvi**: PUBLIC/RESTRICTED rejimlar, bloklash va whitelist.
 
 ## 🚀 O'rnatish (AWS EC2)
 
@@ -29,7 +30,10 @@ Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, Gemini AI bilan
    ```env
    TELEGRAM_BOT_TOKEN=...
    GEMINI_API_KEYS=key1,key2,key3
+   # Ixtiyoriy: Claude kaliti (yo'q bo'lsa ham bot ishlaydi)
+   CLAUDE_API_KEY=sk-ant-...
    ```
+   Claude tanlash uchun Telegram da: `Sozlamalar` → `AI: 🟢 GEMINI` tugmasini bosing.
 
 4. **Ishga tushirish**:
    ```bash
