@@ -647,6 +647,68 @@ class TelegramNotifier:
 
                 await self.send("<b>V27.2 A+ TITAN MASTER</b> botiga xush kelibsiz! 🚀", cid=uid, kb=KB)
                 return off
+
+            # ✅ SPRINT 14: PDF sahifalarini rasm sifatida yuborish (/sahifa va /page)
+            if t.startswith("/sahifa") or t.startswith("/page"):
+                import re as _re
+                match = _re.match(r"^/(?:sahifa|page)\s+(\d+)(?:\s+(.+))?$", t.strip(), _re.IGNORECASE)
+                if not match:
+                    await self.send("⚠️ <b>Format xato.</b>\nFoydalanish: <code>/sahifa &lt;sahifa_raqami&gt; [kitob_nomi]</code>\nMasalan: <code>/sahifa 15 smc</code>", cid=uid)
+                    return off
+                
+                page_num = int(match.group(1))
+                book_keyword = match.group(2).lower().strip() if match.group(2) else ""
+                
+                k_base = "bilim_bazasi"
+                if not os.path.exists(k_base):
+                    await self.send("❌ Xatolik: Bilimlar bazasi papkasi topilmadi.", cid=uid)
+                    return off
+                
+                pdfs = [f for f in os.listdir(k_base) if f.lower().endswith(".pdf")]
+                if not pdfs:
+                    await self.send("❌ Xatolik: Bilimlar bazasida birorta ham PDF kitob topilmadi.", cid=uid)
+                    return off
+                
+                matched_pdf = None
+                if book_keyword:
+                    for pdf in pdfs:
+                        if book_keyword in pdf.lower():
+                            matched_pdf = pdf
+                            break
+                
+                if not matched_pdf:
+                    for pdf in pdfs:
+                        if "smc" in pdf.lower() or "darsliklar" in pdf.lower():
+                            matched_pdf = pdf
+                            break
+                if not matched_pdf:
+                    matched_pdf = pdfs[0]
+                
+                pdf_path = os.path.join(k_base, matched_pdf)
+                try:
+                    import fitz  # PyMuPDF
+                    doc = fitz.open(pdf_path)
+                    zero_idx = page_num - 1
+                    
+                    if zero_idx < 0 or zero_idx >= len(doc):
+                        await self.send(f"❌ Xatolik: Kitobda bunday sahifa yo'q!\nJami sahifalar soni: <b>{len(doc)}</b> ta.", cid=uid)
+                        doc.close()
+                        return off
+                    
+                    await self.send(f"⏳ <b>{matched_pdf}</b> kitobidan <b>{page_num}-sahifa</b> rasmga aylantirilmoqda...", cid=uid)
+                    
+                    page = doc.load_page(zero_idx)
+                    pix = page.get_pixmap(dpi=150)
+                    img_bytes = pix.tobytes("png")
+                    doc.close()
+                    
+                    caption = f"📖 <b>{matched_pdf}</b>\n📄 <b>Sahifa: {page_num}</b>"
+                    await self.send_photo(photo=img_bytes, caption=caption, cid=uid)
+                except Exception as e:
+                    logger.error(f"PDF page rendering error: {e}")
+                    await self.send(f"❌ Xatolik: Sahifani rasmga o'tkazib bo'lmadi.\n{e}", cid=uid)
+                
+                return off
             
             # ✅ Xavfsizlik filtri: Agar menyu tugmasi bosilsa, har qanday kutish holatini bekor qilish
             MENU_BUTTONS = [
