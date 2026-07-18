@@ -106,8 +106,9 @@ class AIEngine:
         """Gemini orqali tahlil. Bu mavjud Gemini logikasi (o'zgartirilmagan)."""
         if contents is None:
             contents = [prompt]
-        # Barcha API kalitlarni aylanish
-        for attempt in range(len(self.api_keys)):
+        max_attempts = max(3, len(self.api_keys) * 2)
+        # Barcha API kalitlarni aylanish (va qayta urinish)
+        for attempt in range(max_attempts):
             try:
                 tools = []
                 if context_type in ['chat', 'fundamental', 'mentor_lessons', 'mentor_qa', 'mentor_live_examples']:
@@ -158,6 +159,11 @@ class AIEngine:
                     return f"❌ Barcha AI kalitlar bloklangan: {err[:50]}"
                 if "429" in err or "RESOURCE EXHAUSTED" in err or "LIMIT" in err:
                     if self._rotate_key():
+                        continue
+                    if attempt < max_attempts - 1:
+                        wait_time = min(15, (attempt + 1) * 3)
+                        logger.warning(f"Rate Limit hit. Waiting {wait_time}s before retry...")
+                        await asyncio.sleep(wait_time)
                         continue
                     return f"❌ Barcha AI kalitlar limitga yetdi."
                 if "GOOGLE_SEARCH" in err or "400" in err or "INVALID_ARGUMENT" in err:
