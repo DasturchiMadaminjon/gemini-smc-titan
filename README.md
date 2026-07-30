@@ -37,7 +37,8 @@ Titan V27.2 - bu Smart Money Concepts (SMC) asosida ishlaydigan, **Gemini yoki C
 
 4. **Ishga tushirish**:
    ```bash
-   nohup python3 watchdog.py > logs/watchdog.log 2>&1 &
+   chmod +x run.sh
+   ./run.sh
    ```
 
 ## 🧪 Testlarni yurgizish

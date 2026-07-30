@@ -73,20 +73,10 @@ Botni **Watchdog** bilan birga `screen` ichida ishga tushirish tavsiya etiladi. 
 
 ### Yangi screen ochish:
 ```bash
-screen -S titan_bot
+chmod +x run.sh
+./run.sh
 ```
-
-### Botni yoqish:
-```bash
-source venv/bin/activate
-python3 watchdog.py
-```
-*(Screen-dan chiqish: Ctrl+A, keyin D tugmasini bosing)*
-
-### Qayta kirish (tekshirish uchun):
-```bash
-screen -r titan_bot
-```
+*(Bu skript orqa fonda nohup yordamida watchdog ni va botni xavfsiz ishga tushiradi)*
 
 ---
 

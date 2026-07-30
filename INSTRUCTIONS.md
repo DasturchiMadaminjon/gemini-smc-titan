@@ -97,14 +97,13 @@ python3 -m pytest tests/test_indicator_quant.py tests/test_ai_visual_evaluation_
 *(Barcha testlar "PASSED" bo'lishi shart).*
 
 ### 3. Botni 24/7 Rejimida Qayta Ishga Tushirish (Screen orqali):
-Eski ishlayotgan bot jarayonlarini butunlay to'xtatib, screen ichida Watchdog orqali botni qayta yoqing:
+Botni fonda xavfsiz va uzluksiz (watchdog bilan) ishga tushirish uchun maxsus skriptdan foydalaning:
 ```bash
-# 1. Eski bot va watchdog jarayonlarini butunlay to'xtatish
-pkill -f watchdog.py
-pkill -f bot.py
+# Bajarish ruxsatini berish (faqat birinchi marta)
+chmod +x run.sh
 
-# 2. Yangi fondagi screen sessionda botni ishga tushirish
-screen -S titan_bot -d -m bash -c "source venv/bin/activate && python3 watchdog.py"
+# Botni fonda ishga tushirish (eski jarayonlarni o'zi avtomatik to'xtatadi)
+./run.sh
 ```
 
 ### 4. Real-Time Skanerlash Loglarini Kuzatish:
@@ -153,8 +152,7 @@ source venv/bin/activate
 python3 build_vectors.py
 
 # 3. Botni qayta ishga tushiring:
-pkill -f watchdog.py && sleep 2
-screen -S titan_bot -d -m bash -c "source venv/bin/activate && python3 watchdog.py"
+./run.sh
 ```
 
 ### Mavjud fayllar (`bilim_bazasi/`):
