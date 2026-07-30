@@ -670,7 +670,6 @@ class TelegramNotifier:
                     if is_safe:
                         await self.send("\u2705 Fayl xavfsiz topildi! Tahlil boshlanmoqda...", cid=uid)
                         
-                        import io, json
                         extracted_text = ""
                         try:
                             if fname2.endswith('.pdf'):
