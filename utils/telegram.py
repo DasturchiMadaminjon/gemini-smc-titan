@@ -975,8 +975,8 @@ class TelegramNotifier:
                         self._pending_docs[consent_key] = {'fid': fid, 'fname': fname, 'uid': uid}
 
                         kb_inline = json.dumps({'inline_keyboard': [[
-                            {'text': '✅ Ha, tekshirib o'qi', 'callback_data': f'doc_yes_{consent_key}'},
-                            {'text': '❌ Yo'q, bekor qil', 'callback_data': f'doc_no_{consent_key}'}
+                            {'text': "✅ Ha, tekshirib o'qi", 'callback_data': f'doc_yes_{consent_key}'},
+                            {'text': "❌ Yo'q, bekor qil", 'callback_data': f'doc_no_{consent_key}'}
                         ]]})
                         await self.send(
                             f"⚠️ <b>Diqqat!</b>\n\n"
