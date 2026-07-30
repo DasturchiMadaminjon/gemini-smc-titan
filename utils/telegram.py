@@ -1207,14 +1207,17 @@ class TelegramNotifier:
                 self.user_states[uid] = "in_session"
                 self.user_modules[uid] = "chat"
                 await self.send("💬 <b>AI Chat Assistant</b> faollashdi. Savolingizni yozing:", cid=uid)
+                return off
 
             elif any(x in t for x in ["Hisobot", "Analytics"]):
                 await self.send("📈 <i>AI hisobot tuzmoqda...</i>", cid=uid)
                 with self.lock: bs['ai_requests'].append({'type': 'analytics', 'symbol': 'ALL', 'chat_id': uid, 'text': 'Full report'})
+                return off
 
             elif "PANIC" in t.upper() and is_admin:
                 with self.lock: bs['panic_request'] = True
                 await self.send("🚨 <b>EMERGENCY CALLED! Barcha savdolar to'xtatildi!</b>", cid=uid)
+                return off
 
             elif "Risk Status" in t and is_admin:
                 with self.lock:
