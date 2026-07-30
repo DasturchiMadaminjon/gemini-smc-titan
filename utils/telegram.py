@@ -613,6 +613,78 @@ class TelegramNotifier:
                            f"💰 Jami foyda: {st['profit']} R")
                 await self.send(msg, cid=uid, kb=json.dumps(ikb))
 
+            # --- VirusTotal fayl roziligi callback ---
+            if cb.get('data', '').startswith('doc_yes_') or cb.get('data', '').startswith('doc_no_'):
+                parts = cb['data'].split('_', 2)
+                action = parts[1]  # 'yes' yoki 'no'
+                consent_key = parts[2] if len(parts) > 2 else ''
+                pending = getattr(self, '_pending_docs', {})
+                doc_info = pending.pop(consent_key, None)
+
+                try: await sess.post(f"{self.base}/answerCallbackQuery", proxy=self.proxy, json={'callback_query_id': cb['id']})
+                except: pass
+
+                if action == 'no' or not doc_info:
+                    await self.send("\u274c Fayl tahlili bekor qilindi.", cid=uid)
+                    return off
+
+                # Ha: yuklab, hash tekshir, VirusTotal ga yubor
+                fid2 = doc_info['fid']
+                fname2 = doc_info['fname']
+                await self.send(f"\U0001f6e1\ufe0f <b>{fname2}</b> xavfsizlik tekshiruvidan o'tkazilmoqda...", cid=uid)
+                try:
+                    import hashlib, aiohttp as _aiohttp
+                    async with sess.get(f"{self.base}/getFile?file_id={fid2}", proxy=self.proxy) as gr2:
+                        if gr2.status != 200:
+                            await self.send("\u274c Fayl yuklab bo'lmadi.", cid=uid); return off
+                        fpath2 = (await gr2.json())['result']['file_path']
+                        async with sess.get(f"https://api.telegram.org/file/bot{self.cfg['bot_token']}/{fpath2}", proxy=self.proxy) as dr2:
+                            if dr2.status != 200:
+                                await self.send("\u274c Fayl yuklab bo'lmadi.", cid=uid); return off
+                            file_bytes2 = await dr2.read()
+
+                    # SHA-256 hash hisoblash (faylni OCHMAYDI!)
+                    sha256 = hashlib.sha256(file_bytes2).hexdigest()
+
+                    # VirusTotal tekshirish
+                    vt_key = self.cfg.get('virustotal_api_key', '') or os.environ.get('VIRUSTOTAL_API_KEY', '')
+                    is_safe = True
+                    if vt_key:
+                        vt_url = f"https://www.virustotal.com/api/v3/files/{sha256}"
+                        async with sess.get(vt_url, headers={'x-apikey': vt_key}, proxy=self.proxy) as vt_r:
+                            if vt_r.status == 200:
+                                vt_data = await vt_r.json()
+                                malicious = vt_data.get('data', {}).get('attributes', {}).get('last_analysis_stats', {}).get('malicious', 0)
+                                if malicious > 0:
+                                    is_safe = False
+                                    await self.send(
+                                        f"\U0001f6a8 <b>VIRUS TOPILDI!</b>\n"
+                                        f"Fayl: <b>{fname2}</b>\n"
+                                        f"Xavfli topilgan: <b>{malicious}</b> ta antivirus\n\n"
+                                        f"Fayl RAD ETILDI va o'chirildi.",
+                                        cid=uid
+                                    )
+                    else:
+                        await self.send("\u26a0\ufe0f VirusTotal kaliti yo'q. Faylni ehtiyotkorlik bilan tahlil qilamiz.", cid=uid)
+
+                    if is_safe:
+                        await self.send("\u2705 Fayl xavfsiz topildi! Tahlil boshlanmoqda...", cid=uid)
+                        # Fayl baytlari allaqachon yuklangan, AI ga yuborish uchun saqlash
+                        # ai_requests queue ga qo'shamiz
+                        with self.lock: bs['ai_requests'].append({
+                            'type': 'mentor_qa',
+                            'symbol': 'SMC',
+                            'chat_id': uid,
+                            'text': f"Fayl mazmuni ({fname2}): [Fayl yuklandi, tahlil qiling]",
+                            'image': None,
+                            'file_bytes': file_bytes2,
+                            'file_name': fname2
+                        })
+                except Exception as e:
+                    self.logger.error(f"VirusTotal callback xato: {e}")
+                    await self.send(f"\u274c Tekshirishda xatolik: {e}", cid=uid)
+                return off
+
             try: await sess.post(f"{self.base}/answerCallbackQuery", proxy=self.proxy, json={'callback_query_id': cb['id']})
             except: pass
             return off
@@ -870,13 +942,50 @@ class TelegramNotifier:
                                 img_data = await dr.read() if dr.status == 200 else None
 
                 # ✅ Sprint 3: PDF va Word fayllarni tahlil qilish
+                # ✅ Xavfsizlik qatlami qo'shildi: Hajm + SHA256 + VirusTotal
                 doc = m.get('document')
                 if doc and current_state == "in_session":
                     fname = doc.get('file_name', '').lower()
                     fid = doc['file_id']
                     valid_exts = ['.pdf', '.docx', '.csv', '.json', '.xlsx', '.xls']
                     if any(fname.endswith(ext) for ext in valid_exts):
-                        await self.send(f"📄 <b>{fname}</b> yuklanmoqda va tahlil qilinmoqda...", cid=uid)
+                        # --- 1-QADAM: Fayl hajmini tekshirish (OCHMAY!) ---
+                        MAX_FILE_SIZE = 20 * 1024 * 1024  # 20 MB
+                        fsize = doc.get('file_size', 0)
+                        if fsize > MAX_FILE_SIZE:
+                            await self.send(
+                                f"⛔ <b>Fayl juda katta!</b> ({fsize // (1024*1024)} MB)\n"
+                                f"📌 Maksimal hajm: <b>20 MB</b>\n\n"
+                                f"💡 <b>Nima qilish mumkin?</b>\n"
+                                f"• Faylni qismlarga bo'lib yuboring\n"
+                                f"• Faylni siqib (.zip) yuboring\n"
+                                f"• Google Drive / Yandex Disk ga joylang va havolasini yuboring",
+                                cid=uid
+                            )
+                            return off
+
+                        # --- 2-QADAM: Foydalanuvchi roziligini so'rash ---
+                        # Faylni yuklamayincha roziligi so'rash uchun inline tugmalar
+                        import hashlib
+                        import uuid as _uuid
+                        consent_key = _uuid.uuid4().hex[:12]
+                        # Vaqtinchalik saqlash (fid va fname)
+                        if not hasattr(self, '_pending_docs'):
+                            self._pending_docs = {}
+                        self._pending_docs[consent_key] = {'fid': fid, 'fname': fname, 'uid': uid}
+
+                        kb_inline = json.dumps({'inline_keyboard': [[
+                            {'text': '✅ Ha, tekshirib o'qi', 'callback_data': f'doc_yes_{consent_key}'},
+                            {'text': '❌ Yo'q, bekor qil', 'callback_data': f'doc_no_{consent_key}'}
+                        ]]})
+                        await self.send(
+                            f"⚠️ <b>Diqqat!</b>\n\n"
+                            f"<b>{fname}</b> fayli xavfsizlik maqsadida VirusTotal tizimida tekshiriladi.\n"
+                            f"Bunga rozimisiz?",
+                            cid=uid, kb=kb_inline
+                        )
+                        return off
+
                         async with sess.get(f"{self.base}/getFile?file_id={fid}", proxy=self.proxy) as gr:
                             if gr.status == 200:
                                 fpath = (await gr.json())['result']['file_path']

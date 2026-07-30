@@ -1,31 +1,61 @@
-# Python Virtual Environments
+# ==============================================
+# MAXFIY FAYLLAR — HECH QACHON GitHub ga bormasin
+# ==============================================
+.env
+.env.*
+!*.env.example
+
+# Ma'lumotlar bazasi
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Telegram sessiyalar
+*.session
+*.session-journal
+.tg_offset
+.tg_offset_test
+.test_off
+
+# ==============================================
+# PYTHON
+# ==============================================
+__pycache__/
+*.py[cod]
+*$py.class
 .venv/
 venv/
 env/
 .venv_311/
 
-# Python Cache
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Databases & Logs
-*.db
+# ==============================================
+# LOGLAR VA VAQTINCHALIK FAYLLAR
+# ==============================================
 *.log
 logs/
-data/*.db
+bot_log.txt
+scratch_response.txt
+prompt_dump.txt
+sim_out.txt
 
-# Environment Variables
-.env
+# ==============================================
+# BILIM BAZASI VA VEKTORLAR (katta fayllar)
+# ==============================================
+bilim_bazasi/*.pdf
+bilim_bazasi/*.docx
+vector_db/
 
-# OS Files
+# ==============================================
+# OS VA IDE
+# ==============================================
 .DS_Store
 Thumbs.db
-
-# IDEs
 .vscode/
 .idea/
+.pytest_cache/
 
-bilim_bazasi/*.pdf
 
 *.pdf
+
+scratch_*.py
