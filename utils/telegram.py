@@ -692,8 +692,8 @@ class TelegramNotifier:
                                 df_xl = pd.read_excel(io.BytesIO(file_bytes2))
                                 extracted_text = df_xl.head(50).to_string()
                             
-                            if extracted_text:
-                                final_text = f"Fayl mazmuni ({fname2}):\n\n{extracted_text[:3000]}"
+                            if extracted_text and len(extracted_text.strip()) > 5:
+                                final_text = f"Fayl mazmuni ({fname2}):\n\n{extracted_text.strip()[:3000]}"
                                 with self.lock: bs['ai_requests'].append({
                                     'type': 'mentor_qa',
                                     'symbol': 'SMC',
@@ -702,7 +702,7 @@ class TelegramNotifier:
                                     'image': None
                                 })
                             else:
-                                await self.send("\u26a0\ufe0f Fayldan matn ajratib bo'lmadi.", cid=uid)
+                                await self.send("\u26a0\ufe0f Fayldan matn ajratib bo'lmadi. Ehtimol bu skanerlangan PDF (rasm) yoki bo'sh fayl.", cid=uid)
                         except Exception as e:
                             self.logger.error(f"Fayl o'qishda xato: {e}")
                             await self.send(f"\u274c Faylni o'qishda xatolik yuz berdi: {e}", cid=uid)
