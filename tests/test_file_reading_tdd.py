@@ -31,24 +31,50 @@ async def run_file_test(notifier, update, file_bytes):
     notifier.user_states["123"] = "in_session"
     
     sess = MagicMock()
-    # getFile mock
     mock_get_file = MagicMock()
     mock_get_file.status = 200
     mock_get_file.json = AsyncMock(return_value={'result': {'file_path': 'path/to/file'}})
     
-    # download file mock
     mock_download = MagicMock()
     mock_download.status = 200
     mock_download.read = AsyncMock(return_value=file_bytes)
     
+    # First get is for file path, second is for file bytes
     mock_cm_get = MagicMock()
-    mock_cm_get.__aenter__ = AsyncMock(side_effect=[mock_get_file, mock_download])
+    mock_cm_get.__aenter__ = AsyncMock(side_effect=[mock_get_file, mock_download, MagicMock()])
     mock_cm_get.__aexit__ = AsyncMock(return_value=False)
     sess.get = MagicMock(return_value=mock_cm_get)
-    
     sess.post = AsyncMock(return_value=AsyncMock(__aenter__=AsyncMock(return_value=MagicMock(status=200)), __aexit__=AsyncMock(return_value=False)))
 
+    # 1-qadam: Hujjatni yuborish (Bot rozilik so'raydi)
     await notifier.handle_update(update, bs, cfg, sess, '.tg_offset')
+    
+    calls = notifier.send.call_args_list
+    if not calls: return calls, bs
+    last_call = calls[-1]
+    
+    # Agar noto'g'ri fayl bo'lsa (virus.exe)
+    if "Faqat .pdf" in last_call[0][0]:
+        return calls, bs
+        
+    kb_str = last_call[1].get('kb')
+    if not kb_str: return calls, bs
+    
+    # 2-qadam: Callback data ('doc_yes_...') ni ajratib olish va tasdiqlash
+    kb_data = json.loads(kb_str)
+    cb_data = kb_data['inline_keyboard'][0][0]['callback_data']
+    
+    cb_update = {
+        'update_id': 2,
+        'callback_query': {
+            'id': 'cb123',
+            'from': {'id': 123},
+            'message': {'chat': {'id': 123}},
+            'data': cb_data
+        }
+    }
+    
+    await notifier.handle_update(cb_update, bs, cfg, sess, '.tg_offset')
     return notifier.send.call_args_list, bs
 
 @pytest.mark.asyncio

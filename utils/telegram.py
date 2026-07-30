@@ -669,17 +669,43 @@ class TelegramNotifier:
 
                     if is_safe:
                         await self.send("\u2705 Fayl xavfsiz topildi! Tahlil boshlanmoqda...", cid=uid)
-                        # Fayl baytlari allaqachon yuklangan, AI ga yuborish uchun saqlash
-                        # ai_requests queue ga qo'shamiz
-                        with self.lock: bs['ai_requests'].append({
-                            'type': 'mentor_qa',
-                            'symbol': 'SMC',
-                            'chat_id': uid,
-                            'text': f"Fayl mazmuni ({fname2}): [Fayl yuklandi, tahlil qiling]",
-                            'image': None,
-                            'file_bytes': file_bytes2,
-                            'file_name': fname2
-                        })
+                        
+                        import io, json
+                        extracted_text = ""
+                        try:
+                            if fname2.endswith('.pdf'):
+                                from PyPDF2 import PdfReader
+                                reader = PdfReader(io.BytesIO(file_bytes2))
+                                extracted_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                            elif fname2.endswith('.docx'):
+                                from docx import Document
+                                doc_obj = Document(io.BytesIO(file_bytes2))
+                                extracted_text = "\n".join([p.text for p in doc_obj.paragraphs])
+                            elif fname2.endswith('.csv'):
+                                import pandas as pd
+                                df_csv = pd.read_csv(io.BytesIO(file_bytes2))
+                                extracted_text = df_csv.head(50).to_string()
+                            elif fname2.endswith('.json'):
+                                extracted_text = json.dumps(json.loads(file_bytes2), indent=2, ensure_ascii=False)[:3000]
+                            elif fname2.endswith(('.xlsx', '.xls')):
+                                import pandas as pd
+                                df_xl = pd.read_excel(io.BytesIO(file_bytes2))
+                                extracted_text = df_xl.head(50).to_string()
+                            
+                            if extracted_text:
+                                final_text = f"Fayl mazmuni ({fname2}):\n\n{extracted_text[:3000]}"
+                                with self.lock: bs['ai_requests'].append({
+                                    'type': 'mentor_qa',
+                                    'symbol': 'SMC',
+                                    'chat_id': uid,
+                                    'text': final_text,
+                                    'image': None
+                                })
+                            else:
+                                await self.send("\u26a0\ufe0f Fayldan matn ajratib bo'lmadi.", cid=uid)
+                        except Exception as e:
+                            self.logger.error(f"Fayl o'qishda xato: {e}")
+                            await self.send(f"\u274c Faylni o'qishda xatolik yuz berdi: {e}", cid=uid)
                 except Exception as e:
                     self.logger.error(f"VirusTotal callback xato: {e}")
                     await self.send(f"\u274c Tekshirishda xatolik: {e}", cid=uid)
@@ -986,41 +1012,7 @@ class TelegramNotifier:
                         )
                         return off
 
-                        async with sess.get(f"{self.base}/getFile?file_id={fid}", proxy=self.proxy) as gr:
-                            if gr.status == 200:
-                                fpath = (await gr.json())['result']['file_path']
-                                async with sess.get(f"https://api.telegram.org/file/bot{self.cfg['bot_token']}/{fpath}", proxy=self.proxy) as dr:
-                                    if dr.status == 200:
-                                        file_bytes = await dr.read()
-                                        extracted_text = ""
-                                        try:
-                                            if fname.endswith('.pdf'):
-                                                from PyPDF2 import PdfReader
-                                                reader = PdfReader(io.BytesIO(file_bytes))
-                                                extracted_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-                                            elif fname.endswith('.docx'):
-                                                from docx import Document
-                                                doc_obj = Document(io.BytesIO(file_bytes))
-                                                extracted_text = "\n".join([p.text for p in doc_obj.paragraphs])
-                                            elif fname.endswith('.csv'):
-                                                import pandas as pd
-                                                df_csv = pd.read_csv(io.BytesIO(file_bytes))
-                                                extracted_text = df_csv.head(50).to_string() # Dastlabki 50 qator
-                                            elif fname.endswith('.json'):
-                                                extracted_text = json.dumps(json.loads(file_bytes), indent=2, ensure_ascii=False)[:3000]
-                                            elif fname.endswith(('.xlsx', '.xls')):
-                                                import pandas as pd
-                                                df_xl = pd.read_excel(io.BytesIO(file_bytes))
-                                                extracted_text = df_xl.head(50).to_string()
-                                            
-                                            if extracted_text:
-                                                t = f"Fayl mazmuni ({fname}):\n\n{extracted_text[:3000]}" # Limit 3k char
-                                            else:
-                                                await self.send("⚠️ Fayldan matn ajratib bo'lmadi.", cid=uid)
-                                                return off
-                                        except Exception as e:
-                                            await self.send(f"❌ Faylni o'qishda xato: {e}", cid=uid)
-                                            return off
+
                     else:
                         await self.send("⚠️ Faqat .pdf, .docx, .csv, .json va .xlsx fayllar qabul qilinadi.", cid=uid)
                         return off
